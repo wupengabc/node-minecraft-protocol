@@ -2,6 +2,9 @@ const ProtoDef = require('protodef').ProtoDef
 const minecraft = require('../datatypes/minecraft')
 const debug = require('debug')('minecraft-protocol')
 const nbt = require('prismarine-nbt')
+const [readVarInt] = require('protodef').types.varint
+const velocityForwarding = require('../transforms/velocityForwarding')
+const tagWith261 = require('../utils/tagWith261')
 
 module.exports = function (client, options) {
   const mcdata = require('minecraft-data')(options.version || require('../version').defaultVersion)
@@ -67,6 +70,52 @@ module.exports = function (client, options) {
   }
 
   function onLoginPluginRequest (packet) {
+    if (velocityForwarding.isVelocityChallenge(packet)) {
+      // Parse the version (single VarInt at the start of packet.data). Default to 1 on failure.
+      let parsedVersion = 1
+      try {
+        if (packet.data && packet.data.length > 0) {
+          const result = readVarInt(packet.data, 0)
+          if (result && typeof result.value === 'number') {
+            parsedVersion = result.value
+          }
+        }
+      } catch (_) {
+        parsedVersion = 1
+      }
+
+      // Requirement 15.2: emit the challenge event before responding so observers can react.
+      client.emit('velocityForwardingChallenge', { version: parsedVersion })
+
+      if (options.velocityForwardingSecret == null) {
+        // Requirement 9.4: respond with successful=false (omit data field) and emit a tagged error.
+        client.write('login_plugin_response', {
+          messageId: packet.messageId
+        })
+        const err = new Error('Velocity Modern Forwarding challenge received but velocityForwardingSecret is not configured')
+        err.code = 'VELOCITY_SECRET_MISSING'
+        tagWith261(err)
+        client.emit('error', err)
+        // Do NOT disconnect the socket — let the proxy decide connection lifecycle.
+        return
+      }
+
+      // Requirements 9.1, 9.2, 9.5: build and send the HMAC-signed forwarding response.
+      const responseBuffer = velocityForwarding.buildForwardingResponse({
+        secret: options.velocityForwardingSecret,
+        version: options.velocityForwardingVersion ?? 1,
+        address: options.localAddress ?? '127.0.0.1',
+        uuid: client.uuid,
+        username: client.username,
+        properties: client.session?.selectedProfile?.properties ?? []
+      })
+      client.write('login_plugin_response', {
+        messageId: packet.messageId,
+        data: responseBuffer
+      })
+      return
+    }
+
     client.write('login_plugin_response', { // write that login plugin request is not understood, just like the Notchian client
       messageId: packet.messageId
     })

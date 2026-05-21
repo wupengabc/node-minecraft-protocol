@@ -10,6 +10,7 @@ const createSerializer = require('./transforms/serializer').createSerializer
 const createDeserializer = require('./transforms/serializer').createDeserializer
 const createCipher = require('./transforms/encryption').createCipher
 const createDecipher = require('./transforms/encryption').createDecipher
+const [readVarInt] = require('protodef').types.varint
 
 const closeTimeout = 30 * 1000
 
@@ -32,6 +33,7 @@ class Client extends EventEmitter {
     this.closeTimer = null
     const mcData = require('minecraft-data')(version)
     this._supportFeature = mcData.supportFeature
+    this.protocolVersion = mcData.version.version
     this.state = states.HANDSHAKING
     this._hasBundlePacket = mcData.supportFeature('hasBundlePacket')
   }
@@ -51,6 +53,42 @@ class Client extends EventEmitter {
       customPackets: this.customPackets,
       noErrorLogging: this.hideErrors
     })
+
+    // Build name-to-id reverse mappings for Configuration and Play debug logging
+    this._packetNameToIdIn = null
+    this._packetNameToIdOut = null
+    if (debug.enabled && (state === states.CONFIGURATION || state === states.PLAY)) {
+      try {
+        const mcData = require('minecraft-data')(this.version)
+        if (mcData && mcData.protocol) {
+          const section = state === states.CONFIGURATION ? mcData.protocol.configuration : mcData.protocol.play
+          if (section) {
+            const inDir = this.isServer ? 'toServer' : 'toClient'
+            const outDir = !this.isServer ? 'toServer' : 'toClient'
+            const inPacket = section[inDir]?.types?.packet
+            const outPacket = section[outDir]?.types?.packet
+            if (inPacket) {
+              const mappings = inPacket[1]?.[0]?.type?.[1]?.mappings
+              if (mappings) {
+                this._packetNameToIdIn = {}
+                for (const [id, name] of Object.entries(mappings)) {
+                  this._packetNameToIdIn[name] = id
+                }
+              }
+            }
+            if (outPacket) {
+              const mappings = outPacket[1]?.[0]?.type?.[1]?.mappings
+              if (mappings) {
+                this._packetNameToIdOut = {}
+                for (const [id, name] of Object.entries(mappings)) {
+                  this._packetNameToIdOut[name] = id
+                }
+              }
+            }
+          }
+        }
+      } catch (e) { /* ignore errors in debug path */ }
+    }
 
     this.splitter.recognizeLegacyPing = state === states.HANDSHAKING
 
@@ -75,6 +113,29 @@ class Client extends EventEmitter {
       }
       const deserializerDirection = this.isServer ? 'toServer' : 'toClient'
       e.field = [this.protocolState, deserializerDirection].concat(parts).join('.')
+
+      // For protocol 775 (26.1): when an inbound VarInt id is not in the current
+      // state's packet table, emit 'rawPacket' instead of 'error' and do NOT
+      // disconnect. This allows the read loop to continue consuming subsequent packets.
+      if (this.protocolVersion === 775 && e.message && e.message.includes('is not in the mappings value') && e.buffer) {
+        let packetId
+        try {
+          const result = readVarInt(e.buffer, 0)
+          packetId = result.value
+        } catch (_) {
+          packetId = undefined
+        }
+        this.emit('rawPacket', {
+          buffer: e.buffer,
+          state: this.protocolState,
+          protocolVersion: 775,
+          packetId
+        })
+        // Re-pipe the stream so the next packet can still be consumed
+        if (!this.compressor) { this.splitter.pipe(this.deserializer) } else { this.decompressor.pipe(this.deserializer) }
+        return
+      }
+
       e.message = e.buffer ? `Parse error for ${e.field} (${e.buffer?.length} bytes, ${e.buffer?.toString('hex').slice(0, 6)}...) : ${e.message}` : `Parse error for ${e.field}: ${e.message}`
       if (!this.compressor) { this.splitter.pipe(this.deserializer) } else { this.decompressor.pipe(this.deserializer) }
       this.emit('error', e)
@@ -90,8 +151,25 @@ class Client extends EventEmitter {
       parsed.metadata.name = parsed.data.name
       parsed.data = parsed.data.params
       parsed.metadata.state = state
+
+      // For protocol 775 (26.1): when an inbound VarInt id is not in the current
+      // state's packet table (name is numeric, params is undefined), emit 'rawPacket'
+      // instead of normal packet events. Do NOT throw 'error', do NOT disconnect socket.
+      // The read loop continues consuming subsequent packets normally.
+      if (this.protocolVersion === 775 && typeof parsed.metadata.name === 'number' && parsed.data === undefined) {
+        this.emit('rawPacket', {
+          buffer: parsed.fullBuffer || parsed.buffer,
+          state: this.protocolState,
+          protocolVersion: 775,
+          packetId: parsed.metadata.name
+        })
+        return
+      }
+
       if (debug.enabled && !debugSkip.includes(parsed.metadata.name)) {
-        debug('read packet ' + state + '.' + parsed.metadata.name)
+        const id = this._packetNameToIdIn?.[parsed.metadata.name]
+        const idStr = id ? ` (${id})` : ''
+        debug('read packet ' + state + '.' + parsed.metadata.name + idStr)
         const s = JSON.stringify(parsed.data, null, 2)
         debug(s && s.length > 10000 ? parsed.data : s)
       }
@@ -240,7 +318,9 @@ class Client extends EventEmitter {
   write (name, params) {
     if (!this.serializer.writable) { return }
     if (debug.enabled && !debugSkip.includes(name)) {
-      debug('writing packet ' + this.state + '.' + name)
+      const id = this._packetNameToIdOut?.[name]
+      const idStr = id ? ` (${id})` : ''
+      debug('writing packet ' + this.state + '.' + name + idStr)
       debug(params)
     }
     this.serializer.write({ name, params })

@@ -15,6 +15,7 @@ const autoVersion = require('./client/autoVersion')
 const pluginChannels = require('./client/pluginChannels')
 const versionChecking = require('./client/versionChecking')
 const uuid = require('./datatypes/uuid')
+const tagWith261 = require('./utils/tagWith261')
 
 module.exports = createClient
 
@@ -28,9 +29,26 @@ function createClient (options) {
   const optVersion = options.version || require('./version').defaultVersion
   const mcData = require('minecraft-data')(optVersion)
   if (!mcData) throw new Error(`unsupported protocol version: ${optVersion}`)
+  if (!mcData.protocol) {
+    const err = new Error(`Missing protocol data: the version directory for ${optVersion} (data/pc/${mcData.version.majorVersion}/) does not contain protocol.json`)
+    if (mcData.version.version === 775) tagWith261(err)
+    throw err
+  }
   const version = mcData.version
   options.majorVersion = version.majorVersion
   options.protocolVersion = version.version
+
+  // Velocity Modern Forwarding options (Requirement 9.3, 10.3)
+  if (options.velocityForwardingSecret === undefined) {
+    options.velocityForwardingSecret = null
+  }
+  if (options.velocityForwardingVersion === undefined) {
+    options.velocityForwardingVersion = 1
+  }
+  if (options.velocityForwardingVersion < 1 || options.velocityForwardingVersion > 4) {
+    throw new Error('velocityForwardingVersion must be in range [1, 4]')
+  }
+
   const hideErrors = options.hideErrors || false
   const Client = options.Client || DefaultClientImpl
 
