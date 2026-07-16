@@ -4,7 +4,7 @@
 const assert = require('assert')
 const Client = require('../src/client')
 const states = require('../src/states')
-const [readVarInt, writeVarInt, sizeOfVarInt] = require('protodef').types.varint
+const [, writeVarInt, sizeOfVarInt] = require('protodef').types.varint
 
 describe('rawPacket emission for unknown packet IDs (protocol 775)', function () {
   this.timeout(5000)
@@ -131,6 +131,44 @@ describe('rawPacket emission for unknown packet IDs (protocol 775)', function ()
     writeVarInt(packetId, buf, 0)
     buf.fill(0x00, idSize)
     client.deserializer.write(buf)
+  })
+
+  it('emits malformed 26.1 play packets as rawPacket and keeps decoding', function (done) {
+    client.state = states.PLAY
+
+    let rawPacket
+    client.on('rawPacket', (payload) => {
+      rawPacket = payload
+    })
+    client.on('error', (err) => done(err))
+
+    const invalidWindowPacket = Buffer.from([0x14])
+    const parseError = new Error('array size is abnormally large, not reading: 168493065')
+    parseError.buffer = invalidWindowPacket
+    parseError.field = 'packet.params.items'
+
+    client.deserializer.emit('error', parseError)
+
+    assert.ok(rawPacket, 'malformed packet should be exposed as rawPacket')
+    assert.strictEqual(rawPacket.state, states.PLAY)
+    assert.strictEqual(rawPacket.protocolVersion, 775)
+    assert.strictEqual(rawPacket.packetId, 0x14)
+    assert.strictEqual(rawPacket.malformed, true)
+    done()
+  })
+
+  it('keeps malformed-array errors fatal outside 26.1 play state', function (done) {
+    client.state = states.CONFIGURATION
+
+    const parseError = new Error('array size is abnormally large, not reading: 168493065')
+    parseError.buffer = Buffer.from([0x14])
+
+    client.once('rawPacket', () => done(new Error('must not recover outside play state')))
+    client.once('error', (err) => {
+      assert.match(err.message, /^Parse error for configuration\.toClient/)
+      done()
+    })
+    client.deserializer.emit('error', parseError)
   })
 
   it('should NOT emit rawPacket for valid known packet IDs', function (done) {

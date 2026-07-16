@@ -114,10 +114,12 @@ class Client extends EventEmitter {
       const deserializerDirection = this.isServer ? 'toServer' : 'toClient'
       e.field = [this.protocolState, deserializerDirection].concat(parts).join('.')
 
-      // For protocol 775 (26.1): when an inbound VarInt id is not in the current
-      // state's packet table, emit 'rawPacket' instead of 'error' and do NOT
-      // disconnect. This allows the read loop to continue consuming subsequent packets.
-      if (this.protocolVersion === 775 && e.message && e.message.includes('is not in the mappings value') && e.buffer) {
+      // Some 26.1 servers/proxies send malformed window/menu payloads. The
+      // packet frame itself has already been consumed, so report it as a raw
+      // packet and keep decoding the next frame instead of terminating the bot.
+      const isUnknownPacket = e.message && e.message.includes('is not in the mappings value')
+      const isMalformedArray = e.message && e.message.includes('array size is abnormally large, not reading')
+      if (this.protocolVersion === 775 && this.protocolState === states.PLAY && (isUnknownPacket || isMalformedArray) && e.buffer) {
         let packetId
         try {
           const result = readVarInt(e.buffer, 0)
@@ -129,9 +131,10 @@ class Client extends EventEmitter {
           buffer: e.buffer,
           state: this.protocolState,
           protocolVersion: 775,
-          packetId
+          packetId,
+          malformed: isMalformedArray
         })
-        // Re-pipe the stream so the next packet can still be consumed
+        // Re-pipe the stream so the next packet can still be consumed.
         if (!this.compressor) { this.splitter.pipe(this.deserializer) } else { this.decompressor.pipe(this.deserializer) }
         return
       }
