@@ -114,12 +114,12 @@ class Client extends EventEmitter {
       const deserializerDirection = this.isServer ? 'toServer' : 'toClient'
       e.field = [this.protocolState, deserializerDirection].concat(parts).join('.')
 
-      // Some 26.1 servers/proxies send malformed window/menu payloads. The
-      // packet frame itself has already been consumed, so report it as a raw
-      // packet and keep decoding the next frame instead of terminating the bot.
+      // For protocol 775 (26.1), an unmapped packet ID is safe to expose as a
+      // raw packet: no payload schema exists to decode. A malformed known packet
+      // must remain an error rather than being skipped, otherwise the client
+      // silently desynchronizes from the server.
       const isUnknownPacket = e.message && e.message.includes('is not in the mappings value')
-      const isMalformedArray = e.message && e.message.includes('array size is abnormally large, not reading')
-      if (this.protocolVersion === 775 && this.protocolState === states.PLAY && (isUnknownPacket || isMalformedArray) && e.buffer) {
+      if (this.protocolVersion === 775 && isUnknownPacket && e.buffer) {
         let packetId
         try {
           const result = readVarInt(e.buffer, 0)
@@ -131,15 +131,22 @@ class Client extends EventEmitter {
           buffer: e.buffer,
           state: this.protocolState,
           protocolVersion: 775,
-          packetId,
-          malformed: isMalformedArray
+          packetId
         })
         // Re-pipe the stream so the next packet can still be consumed.
         if (!this.compressor) { this.splitter.pipe(this.deserializer) } else { this.decompressor.pipe(this.deserializer) }
         return
       }
 
-      e.message = e.buffer ? `Parse error for ${e.field} (${e.buffer?.length} bytes, ${e.buffer?.toString('hex').slice(0, 6)}...) : ${e.message}` : `Parse error for ${e.field}: ${e.message}`
+      if (e.buffer) {
+        try {
+          e.packetId = readVarInt(e.buffer, 0).value
+        } catch (_) {}
+        // Keep the exact framed payload available for a schema fix. It is not
+        // the preceding successfully decoded packet.
+        e.packetBuffer = e.buffer
+      }
+      e.message = e.buffer ? `Parse error for ${e.field} (packet 0x${e.packetId?.toString(16) ?? 'unknown'}, ${e.buffer.length} bytes, ${e.buffer.toString('hex').slice(0, 6)}...) : ${e.message}` : `Parse error for ${e.field}: ${e.message}`
       if (!this.compressor) { this.splitter.pipe(this.deserializer) } else { this.decompressor.pipe(this.deserializer) }
       this.emit('error', e)
     })

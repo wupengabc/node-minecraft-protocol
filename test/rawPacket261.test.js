@@ -133,39 +133,19 @@ describe('rawPacket emission for unknown packet IDs (protocol 775)', function ()
     client.deserializer.write(buf)
   })
 
-  it('emits malformed 26.1 play packets as rawPacket and keeps decoding', function (done) {
+  it('keeps malformed 26.1 play packets as parse errors with their raw frame', function (done) {
     client.state = states.PLAY
-
-    let rawPacket
-    client.on('rawPacket', (payload) => {
-      rawPacket = payload
-    })
-    client.on('error', (err) => done(err))
 
     const invalidWindowPacket = Buffer.from([0x14])
     const parseError = new Error('array size is abnormally large, not reading: 168493065')
     parseError.buffer = invalidWindowPacket
     parseError.field = 'packet.params.items'
 
-    client.deserializer.emit('error', parseError)
-
-    assert.ok(rawPacket, 'malformed packet should be exposed as rawPacket')
-    assert.strictEqual(rawPacket.state, states.PLAY)
-    assert.strictEqual(rawPacket.protocolVersion, 775)
-    assert.strictEqual(rawPacket.packetId, 0x14)
-    assert.strictEqual(rawPacket.malformed, true)
-    done()
-  })
-
-  it('keeps malformed-array errors fatal outside 26.1 play state', function (done) {
-    client.state = states.CONFIGURATION
-
-    const parseError = new Error('array size is abnormally large, not reading: 168493065')
-    parseError.buffer = Buffer.from([0x14])
-
-    client.once('rawPacket', () => done(new Error('must not recover outside play state')))
+    client.once('rawPacket', () => done(new Error('malformed known packets must not be skipped')))
     client.once('error', (err) => {
-      assert.match(err.message, /^Parse error for configuration\.toClient/)
+      assert.strictEqual(err.packetId, 0x14)
+      assert.strictEqual(err.packetBuffer, invalidWindowPacket)
+      assert.match(err.message, /^Parse error for play\.toClient(?:\.[^(]+)? \(packet 0x14/)
       done()
     })
     client.deserializer.emit('error', parseError)
