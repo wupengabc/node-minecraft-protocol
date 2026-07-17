@@ -345,9 +345,9 @@ describe('Protocol 26.1 (775) packet round-trip', function () {
     })
 
     it('window_items decodes bees occupant entity data', function () {
-      // The bee occupant is entity type 4, an empty compound, then two tick
+      // The bee occupant is entity type 11, an empty compound, then two tick
       // counts. Reading the entity type as NBT shifts every subsequent field.
-      const frame = Buffer.from('12030101010101004d01040a00020300', 'hex')
+      const frame = Buffer.from('12030101010101004d010b0a00020300', 'hex')
       const parsed = createDeserializer({ state: states.PLAY, version: VERSION, isServer: false, noErrorLogging: true })
         .parsePacketBuffer(frame)
 
@@ -357,7 +357,7 @@ describe('Protocol 26.1 (775) packet round-trip', function () {
         type: 'bees',
         data: {
           bees: [{
-            entityType: 4,
+            entityType: 11,
             nbtData: { type: 'compound', value: {} },
             ticksInHive: 2,
             minTicksInHive: 3
