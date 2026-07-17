@@ -145,6 +145,10 @@ class Client extends EventEmitter {
         // Keep the exact framed payload available for a schema fix. It is not
         // the preceding successfully decoded packet.
         e.packetBuffer = e.buffer
+        e.packetHex = e.buffer.toString('hex')
+        if (process.env.MINECRAFT_PROTOCOL_ERROR_DUMP) {
+          require('fs').writeFileSync(process.env.MINECRAFT_PROTOCOL_ERROR_DUMP, e.buffer)
+        }
       }
       e.message = e.buffer ? `Parse error for ${e.field} (packet 0x${e.packetId?.toString(16) ?? 'unknown'}, ${e.buffer.length} bytes, ${e.buffer.toString('hex').slice(0, 6)}...) : ${e.message}` : `Parse error for ${e.field}: ${e.message}`
       if (!this.compressor) { this.splitter.pipe(this.deserializer) } else { this.decompressor.pipe(this.deserializer) }

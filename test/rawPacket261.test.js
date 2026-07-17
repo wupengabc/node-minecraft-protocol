@@ -145,6 +145,7 @@ describe('rawPacket emission for unknown packet IDs (protocol 775)', function ()
     client.once('error', (err) => {
       assert.strictEqual(err.packetId, 0x14)
       assert.strictEqual(err.packetBuffer, invalidWindowPacket)
+      assert.strictEqual(err.packetHex, invalidWindowPacket.toString('hex'))
       assert.match(err.message, /^Parse error for play\.toClient(?:\.[^(]+)? \(packet 0x14/)
       done()
     })
