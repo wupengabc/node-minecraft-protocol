@@ -366,6 +366,23 @@ describe('Protocol 26.1 (775) packet round-trip', function () {
       })
     })
 
+    it('window_items decodes an instrument registry holder', function () {
+      // One item with instrument holder ID 5, followed by an empty slot and
+      // the empty carried item. The holder has no preceding boolean flag.
+      const frame = Buffer.from('12030102010101003d060000', 'hex')
+      const parsed = createDeserializer({ state: states.PLAY, version: VERSION, isServer: false, noErrorLogging: true })
+        .parsePacketBuffer(frame)
+
+      assert.strictEqual(parsed.metadata.size, frame.length)
+      assert.strictEqual(parsed.data.params.items.length, 2)
+      assert.deepStrictEqual(parsed.data.params.items[0].components[0], {
+        type: 'instrument',
+        data: { instrumentId: 5 }
+      })
+      assert.deepStrictEqual(parsed.data.params.items[1], { itemCount: 0 })
+      assert.deepStrictEqual(parsed.data.params.carriedItem, { itemCount: 0 })
+    })
+
     it('low_disk_space_warning (empty container, 26.1-new)', function () {
       rt({ name: 'low_disk_space_warning', params: {} })
     })
