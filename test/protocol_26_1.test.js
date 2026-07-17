@@ -344,6 +344,28 @@ describe('Protocol 26.1 (775) packet round-trip', function () {
       )
     })
 
+    it('window_items decodes bees occupant entity data', function () {
+      // The bee occupant is entity type 4, an empty compound, then two tick
+      // counts. Reading the entity type as NBT shifts every subsequent field.
+      const frame = Buffer.from('12030101010101004d01040a00020300', 'hex')
+      const parsed = createDeserializer({ state: states.PLAY, version: VERSION, isServer: false, noErrorLogging: true })
+        .parsePacketBuffer(frame)
+
+      assert.strictEqual(parsed.data.name, 'window_items')
+      assert.strictEqual(parsed.metadata.size, frame.length)
+      assert.deepStrictEqual(parsed.data.params.items[0].components[0], {
+        type: 'bees',
+        data: {
+          bees: [{
+            entityType: 4,
+            nbtData: { type: 'compound', value: {} },
+            ticksInHive: 2,
+            minTicksInHive: 3
+          }]
+        }
+      })
+    })
+
     it('low_disk_space_warning (empty container, 26.1-new)', function () {
       rt({ name: 'low_disk_space_warning', params: {} })
     })
