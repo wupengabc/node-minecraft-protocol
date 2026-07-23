@@ -248,6 +248,7 @@ class Client extends EventEmitter {
 
   setSocket (socket) {
     this.ended = false
+    this._lastSocketActivity = Date.now()
 
     // TODO : A lot of other things needs to be done.
     const endSocket = () => {
@@ -266,6 +267,10 @@ class Client extends EventEmitter {
     }
 
     const onError = (err) => this.emit('error', err)
+    const onSocketData = () => {
+      // Record activity before packet parsing, which can be delayed by a large batch.
+      this._lastSocketActivity = Date.now()
+    }
 
     this.socket = socket
 
@@ -277,6 +282,7 @@ class Client extends EventEmitter {
     this.socket.on('close', endSocket)
     this.socket.on('end', endSocket)
     this.socket.on('timeout', endSocket)
+    this.socket.on('data', onSocketData)
     this.framer.on('error', onError)
     this.splitter.on('error', onError)
 

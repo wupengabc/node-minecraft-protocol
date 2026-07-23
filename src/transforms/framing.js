@@ -23,6 +23,7 @@ class Framer extends Transform {
 }
 
 const LEGACY_PING_PACKET_ID = 0xfe
+const MAX_FRAMES_PER_TICK = 128
 
 class Splitter extends Transform {
   constructor () {
@@ -42,33 +43,36 @@ class Splitter extends Transform {
       let payload = this.buffer.slice(1) // remove 0xfe packet id
       if (payload.length === 0) payload = Buffer.from('\0') // TODO: update minecraft-data to recognize a lone 0xfe, https://github.com/PrismarineJS/minecraft-data/issues/95
       this.push(Buffer.concat([header, payload]))
+      this.buffer = Buffer.alloc(0)
       return cb()
     }
 
-    let offset = 0
-    let value, size
-    let stop = false
-    try {
-      ({ value, size } = readVarInt(this.buffer, offset))
-    } catch (e) {
-      if (!(e.partialReadError)) {
-        throw e
-      } else { stop = true }
-    }
-    if (!stop) {
-      while (this.buffer.length >= offset + size + value) {
-        try {
+    const processFrames = () => {
+      let offset = 0
+      let frames = 0
+      try {
+        while (frames < MAX_FRAMES_PER_TICK && offset < this.buffer.length) {
+          const { value, size } = readVarInt(this.buffer, offset)
+          if (this.buffer.length < offset + size + value) break
+
           this.push(this.buffer.slice(offset + size, offset + size + value))
-          offset += size + value;
-          ({ value, size } = readVarInt(this.buffer, offset))
-        } catch (e) {
-          if (e.partialReadError) {
-            break
-          } else { throw e }
+          offset += size + value
+          frames += 1
         }
+      } catch (e) {
+        if (!e.partialReadError) return cb(e)
       }
+
+      this.buffer = this.buffer.slice(offset)
+      if (frames === MAX_FRAMES_PER_TICK && this.buffer.length > 0) {
+        // Large entity updates can contain thousands of frames. Yielding keeps
+        // chat, keepalive, and application timers responsive without reordering.
+        setImmediate(processFrames)
+        return
+      }
+      cb()
     }
-    this.buffer = this.buffer.slice(offset)
-    return cb()
+
+    processFrames()
   }
 }
