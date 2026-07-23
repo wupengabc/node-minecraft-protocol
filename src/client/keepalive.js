@@ -14,7 +14,7 @@ module.exports = function (client, options) {
 
   function onKeepAlive (packet) {
     scheduleTimeout(checkTimeoutInterval)
-    client.write('keep_alive', {
+    client.writePriority('keep_alive', {
       keepAliveId: packet.keepAliveId
     })
   }

@@ -10,7 +10,7 @@ describe('client keepalive', function () {
     const interval = 30
     let errors = 0
 
-    client.write = () => {}
+    client.writePriority = () => {}
     client.end = () => {}
     client.on('error', () => { errors += 1 })
     installKeepAlive(client, { checkTimeoutInterval: interval })
@@ -32,7 +32,7 @@ describe('client keepalive', function () {
     const interval = 20
     let endReason
 
-    client.write = () => {}
+    client.writePriority = () => {}
     client.end = (reason) => { endReason = reason }
     installKeepAlive(client, { checkTimeoutInterval: interval })
     client.on('error', (error) => {

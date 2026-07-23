@@ -13,6 +13,15 @@ const createDecipher = require('./transforms/encryption').createDecipher
 const [readVarInt] = require('protodef').types.varint
 
 const closeTimeout = 30 * 1000
+const replaceablePackets = new Set([
+  'flying',
+  'look',
+  'player_input',
+  'position',
+  'position_look',
+  'steer_vehicle',
+  'tick_end'
+])
 
 class Client extends EventEmitter {
   constructor (isServer, version, customPackets, hideErrors = false) {
@@ -31,6 +40,9 @@ class Client extends EventEmitter {
     this.latency = 0
     this.hideErrors = hideErrors
     this.closeTimer = null
+    this._writeQueue = []
+    this._priorityWriteQueue = []
+    this._drainingWrites = false
     const mcData = require('minecraft-data')(version)
     this._supportFeature = mcData.supportFeature
     this.protocolVersion = mcData.version.version
@@ -104,6 +116,7 @@ class Client extends EventEmitter {
       if (!this.compressor) { this.serializer.pipe(this.framer) } else { this.serializer.pipe(this.compressor) }
       this.emit('error', e)
     })
+    this.serializer.on('drain', () => this._drainWriteQueue())
 
     this.deserializer.on('error', (e) => {
       let parts = []
@@ -283,6 +296,7 @@ class Client extends EventEmitter {
     this.socket.on('end', endSocket)
     this.socket.on('timeout', endSocket)
     this.socket.on('data', onSocketData)
+    this.socket.on('drain', () => this._drainWriteQueue())
     this.framer.on('error', onError)
     this.splitter.on('error', onError)
 
@@ -292,6 +306,8 @@ class Client extends EventEmitter {
 
   end (reason) {
     this._endReason = reason
+    this._writeQueue = []
+    this._priorityWriteQueue = []
     /* ending the serializer will end the whole chain
     serializer -> framer -> socket -> splitter -> deserializer */
     if (this.serializer) {
@@ -336,14 +352,47 @@ class Client extends EventEmitter {
   }
 
   write (name, params) {
-    if (!this.serializer.writable) { return }
+    this._queueWrite(name, params, false)
+  }
+
+  writePriority (name, params) {
+    this._queueWrite(name, params, true)
+  }
+
+  _queueWrite (name, params, priority) {
+    if (!this.serializer?.writable) return
     if (debug.enabled && !debugSkip.includes(name)) {
       const id = this._packetNameToIdOut?.[name]
       const idStr = id ? ` (${id})` : ''
       debug('writing packet ' + this.state + '.' + name + idStr)
       debug(params)
     }
-    this.serializer.write({ name, params })
+
+    const queue = priority ? this._priorityWriteQueue : this._writeQueue
+    if (!priority && replaceablePackets.has(name)) {
+      for (let index = queue.length - 1; index >= 0; index--) {
+        if (queue[index].name === name) {
+          queue[index] = { name, params }
+          this._drainWriteQueue()
+          return
+        }
+      }
+    }
+    queue.push({ name, params })
+    this._drainWriteQueue()
+  }
+
+  _drainWriteQueue () {
+    if (this._drainingWrites || !this.serializer?.writable) return
+    this._drainingWrites = true
+
+    while (this._writeQueue.length || this._priorityWriteQueue.length) {
+      if (this.socket?.writableNeedDrain || this.framer.readableLength >= this.framer.readableHighWaterMark) break
+      const packet = this._priorityWriteQueue.shift() || this._writeQueue.shift()
+      if (!this.serializer.write(packet)) break
+    }
+
+    this._drainingWrites = false
   }
 
   writeBundle (packets) {
