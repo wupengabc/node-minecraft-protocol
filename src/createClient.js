@@ -31,7 +31,7 @@ function createClient (options) {
   if (!mcData) throw new Error(`unsupported protocol version: ${optVersion}`)
   if (!mcData.protocol) {
     const err = new Error(`Missing protocol data: the version directory for ${optVersion} (data/pc/${mcData.version.majorVersion}/) does not contain protocol.json`)
-    if (mcData.version.version === 775) tagWith261(err)
+    if (mcData.version.version === 775 || mcData.version.version === 776) tagWith261(err, mcData.version.version)
     throw err
   }
   const version = mcData.version

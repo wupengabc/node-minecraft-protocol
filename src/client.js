@@ -127,12 +127,12 @@ class Client extends EventEmitter {
       const deserializerDirection = this.isServer ? 'toServer' : 'toClient'
       e.field = [this.protocolState, deserializerDirection].concat(parts).join('.')
 
-      // For protocol 775 (26.1), an unmapped packet ID is safe to expose as a
+      // For protocols 775/776 (26.1/26.2), an unmapped packet ID is safe to expose as a
       // raw packet: no payload schema exists to decode. A malformed known packet
       // must remain an error rather than being skipped, otherwise the client
       // silently desynchronizes from the server.
       const isUnknownPacket = e.message && e.message.includes('is not in the mappings value')
-      if (this.protocolVersion === 775 && isUnknownPacket && e.buffer) {
+      if ((this.protocolVersion === 775 || this.protocolVersion === 776) && isUnknownPacket && e.buffer) {
         let packetId
         try {
           const result = readVarInt(e.buffer, 0)
@@ -143,7 +143,7 @@ class Client extends EventEmitter {
         this.emit('rawPacket', {
           buffer: e.buffer,
           state: this.protocolState,
-          protocolVersion: 775,
+          protocolVersion: this.protocolVersion,
           packetId
         })
         // Re-pipe the stream so the next packet can still be consumed.
@@ -179,15 +179,15 @@ class Client extends EventEmitter {
       parsed.data = parsed.data.params
       parsed.metadata.state = state
 
-      // For protocol 775 (26.1): when an inbound VarInt id is not in the current
+      // For protocols 775/776 (26.1/26.2): when an inbound VarInt id is not in the current
       // state's packet table (name is numeric, params is undefined), emit 'rawPacket'
       // instead of normal packet events. Do NOT throw 'error', do NOT disconnect socket.
       // The read loop continues consuming subsequent packets normally.
-      if (this.protocolVersion === 775 && typeof parsed.metadata.name === 'number' && parsed.data === undefined) {
+      if ((this.protocolVersion === 775 || this.protocolVersion === 776) && typeof parsed.metadata.name === 'number' && parsed.data === undefined) {
         this.emit('rawPacket', {
           buffer: parsed.fullBuffer || parsed.buffer,
           state: this.protocolState,
-          protocolVersion: 775,
+          protocolVersion: this.protocolVersion,
           packetId: parsed.metadata.name
         })
         return

@@ -94,7 +94,7 @@ module.exports = function (client, options) {
         })
         const err = new Error('Velocity Modern Forwarding challenge received but velocityForwardingSecret is not configured')
         err.code = 'VELOCITY_SECRET_MISSING'
-        tagWith261(err)
+        tagWith261(err, mcdata.version.version)
         client.emit('error', err)
         // Do NOT disconnect the socket — let the proxy decide connection lifecycle.
         return

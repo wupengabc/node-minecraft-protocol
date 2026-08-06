@@ -1,14 +1,14 @@
 'use strict'
 
 /**
- * Injects protocolVersion=775 onto an error object for 26.1 protocol diagnostics.
- * Used by NMP and mineflayer to tag errors originating from the 26.1 protocol path.
+ * Injects the negotiated protocol version onto an error object for 26.1+ diagnostics.
  *
  * @param {Error|object} err - The error object to tag
- * @returns {Error|object} The same error object with protocolVersion set to 775
+ * @param {number} [protocolVersion=775] - The negotiated protocol version
+ * @returns {Error|object} The same error object with protocolVersion set
  */
-function tagWith261 (err) {
-  err.protocolVersion = 775
+function tagWith261 (err, protocolVersion = 775) {
+  err.protocolVersion = protocolVersion
   return err
 }
 
