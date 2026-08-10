@@ -52,7 +52,7 @@ describe('configuration state switches', function () {
     assert.deepStrictEqual(client._priorityWriteQueue, [])
   })
 
-  it('cancels a stale keepalive timeout while switching state', function (done) {
+  it('reschedules (does not leak) a stale keepalive timeout on every state switch', function (done) {
     const client = new EventEmitter()
     const interval = 20
     let errors = 0
@@ -64,17 +64,70 @@ describe('configuration state switches', function () {
 
     client.emit('keep_alive', { keepAliveId: 1 })
     client.emit('state', states.CONFIGURATION)
+    client.emit('state', states.PLAY)
+    client.emit('keep_alive', { keepAliveId: 2 })
+    client.emit('state', states.CONFIGURATION)
+    client.emit('state', states.PLAY)
+    client.emit('keep_alive', { keepAliveId: 3 })
+
+    // Only the last-scheduled deadline (from the final keep_alive) should be
+    // live. If clearTimers() failed to cancel earlier per-state timeouts,
+    // multiple 'error' events would fire instead of exactly one.
+    setTimeout(() => {
+      assert.strictEqual(errors, 1)
+      client.emit('end')
+      done()
+    }, interval + 10)
+  })
+
+  it('arms the watchdog in configuration and catches a switch that never completes', function (done) {
+    // Velocity server switches move the client through play -> configuration
+    // -> play. If the target backend fails and the proxy redirects back to
+    // the original server without ever sending finish_configuration (or any
+    // further bytes), the client must not stay parked in 'configuration'
+    // forever. Regression for: onState() previously only re-armed the
+    // watchdog for 'play', so a stall while switching went undetected with
+    // no timeout, no error, and no reconnect.
+    const client = new EventEmitter()
+    const interval = 20
+    let errors = 0
+    let endReason = null
+
+    client.writePriority = () => {}
+    client.end = (reason) => { endReason = reason }
+    client.on('error', () => { errors++ })
+    installKeepAlive(client, { checkTimeoutInterval: interval, keepAliveTimeoutGracePeriod: 0 })
+
+    client.emit('keep_alive', { keepAliveId: 1 })
+    client.emit('state', states.CONFIGURATION)
+
+    setTimeout(() => {
+      assert.strictEqual(errors, 1)
+      assert.strictEqual(endReason, 'keepAliveError')
+      client.emit('end')
+      done()
+    }, interval + 10)
+  })
+
+  it('does not spuriously fire immediately when entering configuration for a normal switch', function (done) {
+    const client = new EventEmitter()
+    const interval = 1000
+    let errors = 0
+
+    client.writePriority = () => {}
+    client.end = () => {}
+    client.on('error', () => { errors++ })
+    installKeepAlive(client, { checkTimeoutInterval: interval, keepAliveTimeoutGracePeriod: 0 })
+
+    client.emit('keep_alive', { keepAliveId: 1 })
+    client.emit('state', states.CONFIGURATION)
+    client.emit('state', states.PLAY)
+    client.emit('keep_alive', { keepAliveId: 2 })
 
     setTimeout(() => {
       assert.strictEqual(errors, 0)
-      client.emit('state', states.PLAY)
-      client.emit('keep_alive', { keepAliveId: 2 })
-
-      setTimeout(() => {
-        assert.strictEqual(errors, 1)
-        client.emit('end')
-        done()
-      }, interval + 10)
-    }, interval + 10)
+      client.emit('end')
+      done()
+    }, 20)
   })
 })

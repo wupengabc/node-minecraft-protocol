@@ -45,6 +45,7 @@ class Client extends EventEmitter {
     this._drainingWrites = false
     this._socketEventHistory = []
     this._socketActivityCount = 0
+    this._ending = false
     const mcData = require('minecraft-data')(version)
     this._supportFeature = mcData.supportFeature
     this.protocolVersion = mcData.version.version
@@ -284,6 +285,7 @@ class Client extends EventEmitter {
 
   setSocket (socket) {
     this.ended = false
+    this._ending = false
     this._lastSocketActivity = Date.now()
     this._lastSocketDataAt = null
     this._lastSocketEvent = null
@@ -314,6 +316,20 @@ class Client extends EventEmitter {
         code: err.code,
         message: err.message
       })
+      // Once we've already decided to end this connection (keepalive
+      // timeout, a Velocity switch that never completed, or a normal
+      // bot.end()/quit()), a socket error surfacing during teardown (e.g.
+      // EPIPE from writing a FIN to an already-blackholed connection) is
+      // expected noise, not a new problem. Emitting it as a second top-level
+      // 'error' event produces a confusing, context-free message right after
+      // the real error/reason has already been reported. Still record it for
+      // diagnostics, but don't re-alarm consumers; endSocket() below still
+      // fires 'end' with the original reason.
+      if (this._ending) {
+        this._teardownError = { code: err.code, message: err.message, at: Date.now() }
+        endSocket('error', false)
+        return
+      }
       this.emit('error', err)
       endSocket('error', false)
     }
@@ -356,6 +372,7 @@ class Client extends EventEmitter {
 
   end (reason) {
     this._endReason = reason
+    this._ending = true
     this._writeQueue = []
     this._priorityWriteQueue = []
     /* ending the serializer will end the whole chain

@@ -44,7 +44,14 @@ module.exports = function (client, options) {
 
   function onState (state) {
     clearTimers()
-    if (state === 'play') {
+    // Configuration also carries keep_alive packets (added in 1.20.2) and is
+    // where a Velocity backend switch parks the client while it dials the
+    // target server. If a failed switch never sends finish_configuration (or
+    // any further bytes) while redirecting back to the original backend, the
+    // watchdog must still be armed here — otherwise it stays disarmed forever
+    // (onState only re-armed for 'play') and the connection hangs with no
+    // timeout, no error, and no reconnect.
+    if (state === 'play' || state === 'configuration') {
       scheduleTimeout(checkTimeoutInterval)
     }
   }
