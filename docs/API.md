@@ -130,6 +130,7 @@ Returns a `Client` instance and perform login.
  * closeTimeout : end the connection after this delay in milliseconds if server doesn't answer to ping, default to `120*1000`
  * noPongTimeout : after the server opened the connection, wait for a default of `5*1000` after pinging and answers without the latency
  * checkTimeoutInterval : default to `30*1000` (30s), check if keepalive received at that period, disconnect otherwise.
+ * keepAliveTimeoutGracePeriod : after inactivity reaches `checkTimeoutInterval`, wait this additional bounded period for socket activity before disconnecting. Defaults to `5*1000` (5s). The client emits `keepAliveWarning`, `keepAliveRecovered`, and `keepAliveTimeout` diagnostics events.
  * version : 1.8 or 1.9 or false (to auto-negotiate): default to 1.8
  * customPackets (optional) : an object index by version/state/direction/name, see client_custom_packet for an example
  * hideErrors : do not display errors, default to false
@@ -405,5 +406,4 @@ Returns a minecraft protocol [serializer](https://github.com/roblabla/ProtoDef#s
 ## mc.createDeserializer({ state = states.HANDSHAKING, isServer = false, packetsToParse = {"packet": true}, version })
 
 Returns a minecraft protocol [deserializer](https://github.com/roblabla/ProtoDef#parserprotomaintype) for these parameters.
-
 

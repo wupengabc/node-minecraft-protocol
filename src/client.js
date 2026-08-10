@@ -43,6 +43,8 @@ class Client extends EventEmitter {
     this._writeQueue = []
     this._priorityWriteQueue = []
     this._drainingWrites = false
+    this._socketEventHistory = []
+    this._socketActivityCount = 0
     const mcData = require('minecraft-data')(version)
     this._supportFeature = mcData.supportFeature
     this.protocolVersion = mcData.version.version
@@ -283,39 +285,66 @@ class Client extends EventEmitter {
   setSocket (socket) {
     this.ended = false
     this._lastSocketActivity = Date.now()
+    this._lastSocketDataAt = null
+    this._lastSocketEvent = null
+    this._socketActivityCount = 0
+    this._socketEventHistory = []
+
+    const recordSocketEvent = (event, details = {}) => {
+      const record = { event, at: Date.now(), ...details }
+      this._lastSocketEvent = record
+      this._socketEventHistory.push(record)
+      if (this._socketEventHistory.length > 8) this._socketEventHistory.shift()
+    }
 
     // TODO : A lot of other things needs to be done.
-    const endSocket = () => {
+    const endSocket = (event, record = true) => {
       if (this.ended) return
+      if (record) recordSocketEvent(event)
       this.ended = true
       clearTimeout(this.closeTimer)
-      this.socket.removeListener('close', endSocket)
-      this.socket.removeListener('end', endSocket)
-      this.socket.removeListener('timeout', endSocket)
+      this.socket.removeListener('close', onClose)
+      this.socket.removeListener('end', onEnd)
+      this.socket.removeListener('timeout', onTimeout)
       this.emit('end', this._endReason || 'socketClosed')
     }
 
     const onFatalError = (err) => {
+      recordSocketEvent('error', {
+        code: err.code,
+        message: err.message
+      })
       this.emit('error', err)
-      endSocket()
+      endSocket('error', false)
     }
 
     const onError = (err) => this.emit('error', err)
-    const onSocketData = () => {
+    const onSocketData = (data) => {
       // Record activity before packet parsing, which can be delayed by a large batch.
       this._lastSocketActivity = Date.now()
+      this._lastSocketDataAt = this._lastSocketActivity
+      this._socketActivityCount++
+      recordSocketEvent('data', { bytes: data.length })
+      this.emit('socketActivity')
     }
+    const onConnect = () => {
+      recordSocketEvent('connect')
+      this.emit('connect')
+    }
+    const onClose = () => endSocket('close')
+    const onEnd = () => endSocket('end')
+    const onTimeout = () => endSocket('timeout')
 
     this.socket = socket
 
     if (this.socket.setNoDelay) { this.socket.setNoDelay(true) }
 
-    this.socket.on('connect', () => this.emit('connect'))
+    this.socket.on('connect', onConnect)
 
     this.socket.on('error', onFatalError)
-    this.socket.on('close', endSocket)
-    this.socket.on('end', endSocket)
-    this.socket.on('timeout', endSocket)
+    this.socket.on('close', onClose)
+    this.socket.on('end', onEnd)
+    this.socket.on('timeout', onTimeout)
     this.socket.on('data', onSocketData)
     this.socket.on('drain', () => this._drainWriteQueue())
     this.framer.on('error', onError)
@@ -410,6 +439,7 @@ class Client extends EventEmitter {
     while (this._writeQueue.length || this._priorityWriteQueue.length) {
       if (this.socket?.writableNeedDrain || this.framer.readableLength >= this.framer.readableHighWaterMark) break
       const packet = this._priorityWriteQueue.shift() || this._writeQueue.shift()
+      if (packet.name === 'keep_alive') this._lastKeepAliveWriteAt = Date.now()
       if (!this.serializer.write(packet)) break
     }
 

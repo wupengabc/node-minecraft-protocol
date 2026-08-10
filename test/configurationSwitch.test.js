@@ -60,7 +60,7 @@ describe('configuration state switches', function () {
     client.writePriority = () => {}
     client.end = () => {}
     client.on('error', () => { errors++ })
-    installKeepAlive(client, { checkTimeoutInterval: interval })
+    installKeepAlive(client, { checkTimeoutInterval: interval, keepAliveTimeoutGracePeriod: 0 })
 
     client.emit('keep_alive', { keepAliveId: 1 })
     client.emit('state', states.CONFIGURATION)

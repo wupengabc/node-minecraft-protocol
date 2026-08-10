@@ -82,6 +82,38 @@ describe('protocol 26.2 (776)', function () {
     assert.strictEqual(metadataTypes['42'], 'humanoid_arm')
   })
 
+  it('decodes and round-trips a captured 26.2 teams packet', function () {
+    const raw = Buffer.from(
+      '6d0467637a410008000467637a410800000800000001010f00010367637a',
+      'hex'
+    )
+    const deserializer = protocol.createDeserializer({
+      state: states.PLAY,
+      version: '26.2',
+      isServer: false,
+      noErrorLogging: true
+    })
+    const serializer = protocol.createSerializer({
+      state: states.PLAY,
+      version: '26.2',
+      isServer: true
+    })
+    const parsed = deserializer.parsePacketBuffer(raw)
+    const packet = parsed.data.params
+
+    assert.strictEqual(parsed.metadata.size, raw.length)
+    assert.strictEqual(packet.team, 'gczA')
+    assert.strictEqual(packet.mode, 'add')
+    assert.strictEqual(packet.name.value, 'gczA')
+    assert.strictEqual(packet.prefix.value, '')
+    assert.strictEqual(packet.suffix.value, '')
+    assert.strictEqual(packet.nameTagVisibility, 'always')
+    assert.strictEqual(packet.collisionRule, 'never')
+    assert.strictEqual(packet.formatting, 15)
+    assert.deepStrictEqual(packet.players, ['gcz'])
+    assert.ok(raw.equals(serializer.createPacketBuffer(parsed.data)))
+  })
+
   it('decodes captured 26.2 pig sound metadata', function () {
     const client = new Client(false, '26.2', undefined, true)
     client.state = states.PLAY

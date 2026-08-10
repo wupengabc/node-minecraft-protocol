@@ -12,6 +12,29 @@ import NodeRSA from 'node-rsa';
 type PromiseLike = Promise<void> | void
 
 declare module 'minecraft-protocol' {
+	export interface KeepAliveDiagnostics {
+		at: number
+		phase: 'keepAliveWarning' | 'keepAliveRecovered' | 'keepAliveTimeout'
+		protocolState?: string
+		protocolVersion?: number
+		checkTimeoutInterval: number
+		keepAliveTimeoutGracePeriod: number
+		lastSocketActivityAt: number | null
+		socketIdleFor: number | null
+		socketActivityCount: number | null
+		lastSocketDataAt: number | null
+		lastSocketEvent?: { event: string; at: number; bytes?: number; code?: string; message?: string } | null
+		socketEventHistory: Array<{ event: string; at: number; bytes?: number; code?: string; message?: string }>
+		lastKeepAliveAt: number | null
+		lastKeepAliveId: number | string | null
+		lastKeepAliveReplyQueuedAt: number | null
+		lastKeepAliveWriteAt: number | null
+		timerDelay?: number
+		graceStartedAt?: number | null
+		graceElapsed?: number
+		recovery?: string
+	}
+
 	export class Client extends EventEmitter {
 		constructor(isServer: boolean, version: string, customPackets?: any)
 		state: States
@@ -28,6 +51,7 @@ declare module 'minecraft-protocol' {
 		protocolVersion: number
 		version: string
 		write(name: string, params: any): void
+		writePriority(name: string, params: any): void
 		writeRaw(buffer: any): void
 		compressionThreshold: string
 		ended: boolean
@@ -48,6 +72,9 @@ declare module 'minecraft-protocol' {
 		on(event: 'state', handler: (newState: States, oldState: States) => PromiseLike): this
 		on(event: 'end', handler: (reason: string) => PromiseLike): this
 		on(event: 'connect', handler: () => PromiseLike): this
+		on(event: 'keepAliveWarning', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this
+		on(event: 'keepAliveRecovered', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this
+		on(event: 'keepAliveTimeout', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this
 		on(event: string, handler: (data: any, packetMeta: PacketMeta) => PromiseLike): this
 		on(event: `raw.${string}`, handler: (buffer: Buffer, packetMeta: PacketMeta) => PromiseLike): this
 		on(event: 'playerChat', handler: (data: {
@@ -137,6 +164,8 @@ declare module 'minecraft-protocol' {
 		closeTimeout?: number
 		noPongTimeout?: number
 		checkTimeoutInterval?: number
+		/** Additional bounded grace after inactivity before ending the client. */
+		keepAliveTimeoutGracePeriod?: number
 		version?: string
 		customPackets?: any
 		hideErrors?: boolean
