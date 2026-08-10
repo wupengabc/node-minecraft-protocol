@@ -7,10 +7,11 @@ module.exports = function (client, options) {
   const checkTimeoutInterval = options.checkTimeoutInterval || 30 * 1000
 
   client.on('keep_alive', onKeepAlive)
+  client.on('state', onState)
 
   let timeout = null
 
-  client.on('end', () => clearTimeout(timeout))
+  client.on('end', clearTimeout)
 
   function onKeepAlive (packet) {
     scheduleTimeout(checkTimeoutInterval)
@@ -19,13 +20,19 @@ module.exports = function (client, options) {
     })
   }
 
+  function onState (state) {
+    clearTimeout()
+    if (state === 'play') {
+      scheduleTimeout(checkTimeoutInterval)
+    }
+  }
+
   function scheduleTimeout (delay) {
-    if (timeout) clearTimeout(timeout)
+    clearTimeout()
     timeout = setTimeout(() => {
+      timeout = null
       const elapsed = Date.now() - client._lastSocketActivity
 
-      // Packet parsing may be backlogged, but incoming socket data proves the
-      // connection is alive. Do not turn a local processing delay into a timeout.
       if (client._lastSocketActivity && elapsed < checkTimeoutInterval) {
         scheduleTimeout(checkTimeoutInterval - elapsed)
         return
@@ -34,5 +41,12 @@ module.exports = function (client, options) {
       client.emit('error', new Error(`client timed out after ${checkTimeoutInterval} milliseconds`))
       client.end('keepAliveError')
     }, delay)
+  }
+
+  function clearTimeout () {
+    if (timeout) {
+      globalThis.clearTimeout(timeout)
+      timeout = null
+    }
   }
 }
