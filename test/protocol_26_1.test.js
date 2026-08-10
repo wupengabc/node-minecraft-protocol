@@ -29,6 +29,7 @@
 const assert = require('assert')
 const fc = require('fast-check')
 const { createSerializer, createDeserializer, states } = require('..')
+const [readLpVec3, writeLpVec3, sizeOfLpVec3] = require('../src/datatypes/lpVec3')
 
 const VERSION = '26.1.2'
 const NUM_RUNS = 200
@@ -293,6 +294,20 @@ describe('Protocol 26.1 (775) packet round-trip', function () {
       // MCC names this "client_tick_end" but minecraft-data 26.1 surfaces it
       // as `tick_end` in the toServer mapper. We follow the data file.
       rt({ name: 'tick_end', params: {} })
+    })
+
+    it('entity velocity uses the big-endian lpVec3 wire layout', function () {
+      const velocity = { x: 0.4, y: 0.1, z: -0.2 }
+      const buffer = Buffer.alloc(sizeOfLpVec3(velocity))
+      const end = writeLpVec3(velocity, buffer, 0)
+      const decoded = readLpVec3(buffer, 0)
+
+      assert.strictEqual(end, 6)
+      assert.strictEqual(buffer.toString('hex'), 'c1cc66651996')
+      assert.strictEqual(decoded.size, end)
+      assert.ok(Math.abs(decoded.value.x - velocity.x) < 0.001)
+      assert.ok(Math.abs(decoded.value.y - velocity.y) < 0.001)
+      assert.ok(Math.abs(decoded.value.z - velocity.z) < 0.001)
     })
   })
 

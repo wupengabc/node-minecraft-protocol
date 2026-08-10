@@ -132,29 +132,15 @@ class Client extends EventEmitter {
       // must remain an error rather than being skipped, otherwise the client
       // silently desynchronizes from the server.
       const isUnknownPacket = e.message && e.message.includes('is not in the mappings value')
-      if ((this.protocolVersion === 775 || this.protocolVersion === 776) && isUnknownPacket && e.buffer) {
+      if (e.buffer) {
         let packetId
         try {
           const result = readVarInt(e.buffer, 0)
           packetId = result.value
+          e.packetId = packetId
         } catch (_) {
           packetId = undefined
         }
-        this.emit('rawPacket', {
-          buffer: e.buffer,
-          state: this.protocolState,
-          protocolVersion: this.protocolVersion,
-          packetId
-        })
-        // Re-pipe the stream so the next packet can still be consumed.
-        if (!this.compressor) { this.splitter.pipe(this.deserializer) } else { this.decompressor.pipe(this.deserializer) }
-        return
-      }
-
-      if (e.buffer) {
-        try {
-          e.packetId = readVarInt(e.buffer, 0).value
-        } catch (_) {}
         // Keep the exact framed payload available for a schema fix. It is not
         // the preceding successfully decoded packet.
         e.packetBuffer = e.buffer
@@ -163,7 +149,32 @@ class Client extends EventEmitter {
           require('fs').writeFileSync(process.env.MINECRAFT_PROTOCOL_ERROR_DUMP, e.buffer)
         }
       }
-      e.message = e.buffer ? `Parse error for ${e.field} (packet 0x${e.packetId?.toString(16) ?? 'unknown'}, ${e.buffer.length} bytes, ${e.buffer.toString('hex').slice(0, 6)}...) : ${e.message}` : `Parse error for ${e.field}: ${e.message}`
+      const isMalformedTeamPacket = e.packetId === 0x6d &&
+        this.protocolState === states.PLAY &&
+        !this.isServer &&
+        !!e.buffer
+      if ((this.protocolVersion === 775 || this.protocolVersion === 776) && (isUnknownPacket || isMalformedTeamPacket) && e.buffer) {
+        const packetId = e.packetId
+        this.emit('rawPacket', {
+          buffer: e.buffer,
+          state: this.protocolState,
+          protocolVersion: this.protocolVersion,
+          packetId,
+          malformed: isMalformedTeamPacket
+        })
+        // Re-pipe the stream so the next packet can still be consumed.
+        if (!this.compressor) { this.splitter.pipe(this.deserializer) } else { this.decompressor.pipe(this.deserializer) }
+        return
+      }
+
+      // Always include the packet context. When the FullPacketParser did not
+      // attach the framed payload (e.g. errors raised inside raw-protocol
+      // native types), report the protocol state + direction so the failing
+      // packet can still be correlated with wire dumps.
+      const packetInfo = e.buffer
+        ? `(packet 0x${e.packetId?.toString(16) ?? 'unknown'}, ${e.buffer.length} bytes, ${e.buffer.toString('hex').slice(0, 6)}...)`
+        : `(protocol ${this.protocolVersion}, no framed payload attached)`
+      e.message = `Parse error for ${e.field} ${packetInfo} : ${e.message}`
       if (!this.compressor) { this.splitter.pipe(this.deserializer) } else { this.decompressor.pipe(this.deserializer) }
       this.emit('error', e)
     })
@@ -224,6 +235,16 @@ class Client extends EventEmitter {
   set state (newProperty) {
     const oldProperty = this.protocolState
     this.protocolState = newProperty
+
+    if (oldProperty && oldProperty !== newProperty) {
+      // Packets queued for the old backend/state cannot be sent after a
+      // Velocity server switch. In particular, a queued movement packet would
+      // otherwise be serialized before configuration_acknowledged and stall
+      // the new backend's configuration handshake.
+      this._writeQueue.length = 0
+      this._priorityWriteQueue.length = 0
+      this._mcBundle = []
+    }
 
     if (this.serializer) {
       if (!this.compressor) {

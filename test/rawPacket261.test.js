@@ -152,6 +152,24 @@ describe('rawPacket emission for unknown packet IDs (protocol 775)', function ()
     client.deserializer.emit('error', parseError)
   })
 
+  it('skips a malformed 26.1 teams packet and preserves its raw frame', function (done) {
+    client.state = states.PLAY
+
+    const malformedTeamsPacket = Buffer.from('6d074c', 'hex')
+    const parseError = new RangeError('The value of "offset" is out of range')
+    parseError.buffer = malformedTeamsPacket
+    parseError.field = 'packet.params.name'
+
+    client.once('error', (err) => done(new Error('malformed teams packets must not terminate the client: ' + err.message)))
+    client.once('rawPacket', (packet) => {
+      assert.strictEqual(packet.packetId, 0x6d)
+      assert.strictEqual(packet.malformed, true)
+      assert.strictEqual(packet.buffer, malformedTeamsPacket)
+      done()
+    })
+    client.deserializer.emit('error', parseError)
+  })
+
   it('should NOT emit rawPacket for valid known packet IDs', function (done) {
     client.state = states.PLAY
 

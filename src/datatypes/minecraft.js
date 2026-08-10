@@ -98,6 +98,9 @@ function sizeOfCompressedNbt (value) {
 }
 
 function readRestBuffer (buffer, offset) {
+  if (offset < 0 || offset > buffer.length) {
+    throw new Error(`restBuffer read out of bounds: offset=${offset} bufferLength=${buffer.length}`)
+  }
   return {
     value: buffer.slice(offset),
     size: buffer.length - offset
@@ -118,7 +121,7 @@ function readEntityMetadata (buffer, offset, { type, endVal }) {
   const metadata = []
   let item
   while (true) {
-    if (offset + 1 > buffer.length) { throw new PartialReadError() }
+    if (cursor + 1 > buffer.length) { throw new PartialReadError() }
     item = buffer.readUInt8(cursor)
     if (item === endVal) {
       return {
@@ -154,7 +157,7 @@ function readTopBitSetTerminatedArray (buffer, offset, { type }) {
   const values = []
   let item
   while (true) {
-    if (offset + 1 > buffer.length) { throw new PartialReadError() }
+    if (cursor + 1 > buffer.length) { throw new PartialReadError() }
     item = buffer.readUInt8(cursor)
     buffer[cursor] = buffer[cursor] & 127 // removes top bit
     const results = this.read(buffer, cursor, type, {})

@@ -4,6 +4,7 @@ const uuid = require('uuid-1345')
 
 module.exports = function (client, options) {
   client.serverFeatures = {}
+  let configurationHandlers = null
   client.on('server_data', (packet) => {
     client.serverFeatures = {
       chatPreview: packet.previewsChat,
@@ -48,24 +49,46 @@ module.exports = function (client, options) {
 
     function enterConfigState (finishCb) {
       if (client.state === states.CONFIGURATION) return
-      // If we are returning to the configuration state from the play state, we ahve to acknowledge it.
-      if (client.state === states.PLAY) {
-        client.write('configuration_acknowledged', {})
-      }
+
+      clearConfigurationHandlers()
+
+      const returningFromPlay = client.state === states.PLAY
+      // The acknowledgement is a play-state packet. It tells the server that
+      // the client is about to switch its parser to configuration.
+      if (returningFromPlay) client.write('configuration_acknowledged', {})
       client.state = states.CONFIGURATION
-      client.once('select_known_packs', () => {
+
+      const onSelectKnownPacks = () => {
         client.write('select_known_packs', { packs: [] })
-      })
-      client.once('code_of_conduct', () => {
+      }
+      const onCodeOfConduct = () => {
         client.write('accept_code_of_conduct', {})
-      })
-      // Server should send finish_configuration on its own right after sending the client a dimension codec
-      // for login (that has data about world height, world gen, etc) after getting a login success from client
-      client.once('finish_configuration', () => {
+      }
+      const onFinishConfiguration = () => {
+        clearConfigurationHandlers()
         client.write('finish_configuration', {})
         client.state = states.PLAY
         finishCb?.()
-      })
+      }
+
+      configurationHandlers = {
+        onSelectKnownPacks,
+        onCodeOfConduct,
+        onFinishConfiguration
+      }
+      client.once('select_known_packs', onSelectKnownPacks)
+      client.once('code_of_conduct', onCodeOfConduct)
+      // Server should send finish_configuration on its own right after sending the client a dimension codec
+      // for login (that has data about world height, world gen, etc) after getting a login success from client
+      client.once('finish_configuration', onFinishConfiguration)
+    }
+
+    function clearConfigurationHandlers () {
+      if (!configurationHandlers) return
+      client.removeListener('select_known_packs', configurationHandlers.onSelectKnownPacks)
+      client.removeListener('code_of_conduct', configurationHandlers.onCodeOfConduct)
+      client.removeListener('finish_configuration', configurationHandlers.onFinishConfiguration)
+      configurationHandlers = null
     }
 
     function onReady () {
