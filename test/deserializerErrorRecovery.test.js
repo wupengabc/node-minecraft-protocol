@@ -114,12 +114,13 @@ describe('deserializer error recovery', () => {
     }, 50)
   })
 
-  // The production signature: a malformed teams packet (Play 0x6d) on 26.2.
-  // This takes the 775/776 branch, which reports 'rawPacket' and returns
-  // WITHOUT emitting 'error' -- so if recovery is broken the connection simply
-  // goes silent with nothing at all in the logs, which is exactly what was
-  // observed in production.
-  it('stays silent but keeps parsing after a malformed teams packet (26.2)', function (done) {
+  // The silent branch: an UNMAPPED packet id on 26.2. There is no schema for
+  // such a packet, so the client reports it via 'rawPacket' and returns WITHOUT
+  // emitting 'error'. If stream recovery is broken here the connection simply
+  // goes quiet with nothing at all in the logs -- exactly the production
+  // symptom. (teams/0x6d used to take this branch too; that special case was
+  // removed once both versions' schemas were verified correct.)
+  it('stays silent but keeps parsing after an unmapped packet id (26.2)', function (done) {
     this.timeout(5000)
 
     const client = new Client(false, '26.2')
@@ -142,26 +143,27 @@ describe('deserializer error recovery', () => {
     parser.parsePacketBuffer = (buffer) => {
       if (!poisoned) {
         poisoned = true
-        const err = new Error('simulated malformed teams packet')
+        // This is the exact message protodef raises for an id with no mapping,
+        // which is what the client matches on to take the silent branch.
+        const err = new Error('0x7f is not in the mappings value')
         err.partialReadError = false
-        // The framed payload the client inspects to classify the failure.
-        err.buffer = Buffer.from([0x6d, 0x00, 0x01, 0x02])
+        err.buffer = Buffer.from([0x7f, 0x00, 0x01, 0x02])
         throw err
       }
       return realParse(buffer)
     }
 
     const good = buildKeepAlive(client)
-    socket.write(frame(Buffer.from([0x6d, 0x00, 0x01, 0x02])))
+    socket.write(frame(Buffer.from([0x7f, 0x00, 0x01, 0x02])))
 
     setTimeout(() => {
       socket.write(frame(good))
       socket.write(frame(good))
 
       setTimeout(() => {
-        assert.strictEqual(errors.length, 0, 'the 26.2 malformed-teams branch must not surface an error')
-        assert.strictEqual(rawPackets.length, 1, 'the malformed packet must be reported once as rawPacket')
-        assert.strictEqual(rawPackets[0].malformed, true, 'it must be flagged as malformed')
+        assert.strictEqual(errors.length, 0, 'the unmapped-id branch must not surface an error')
+        assert.strictEqual(rawPackets.length, 1, 'the unmapped packet must be reported once as rawPacket')
+        assert.strictEqual(rawPackets[0].packetId, 0x7f)
         assert.strictEqual(
           keepAlives, 2,
           `every later keep_alive must still be parsed, got ${keepAlives}/2 -- ` +

@@ -198,18 +198,26 @@ class Client extends EventEmitter {
           require('fs').writeFileSync(process.env.MINECRAFT_PROTOCOL_ERROR_DUMP, e.buffer)
         }
       }
-      const isMalformedTeamPacket = e.packetId === 0x6d &&
-        this.protocolState === states.PLAY &&
-        !this.isServer &&
-        !!e.buffer
-      if ((this.protocolVersion === 775 || this.protocolVersion === 776) && (isUnknownPacket || isMalformedTeamPacket) && e.buffer) {
-        const packetId = e.packetId
+      // An unmapped packet ID is safe to expose as a raw packet: there is no
+      // payload schema to decode, so nothing can be desynchronized by skipping
+      // it. A malformed KNOWN packet is different -- it means our schema and the
+      // server disagree, which must surface as an error.
+      //
+      // teams (0x6d) used to be special-cased here as "known to be malformed on
+      // 26.1/26.2". That was wrong. The 26.1 and 26.2 packet_teams schemas were
+      // both verified field-by-field against the decompiled
+      // ClientboundSetPlayerTeamPacket.Parameters and are correct; they merely
+      // order their fields differently between the two versions. Parsing a
+      // frame with the wrong version's schema does not raise an error at all --
+      // it silently decodes garbage and under-consumes the buffer. So a real
+      // 0x6d parse error is a genuine signal and swallowing it only hid
+      // problems. See test/protocol_26_2.test.js for the field-order pins.
+      if ((this.protocolVersion === 775 || this.protocolVersion === 776) && isUnknownPacket && e.buffer) {
         this.emit('rawPacket', {
           buffer: e.buffer,
           state: this.protocolState,
           protocolVersion: this.protocolVersion,
-          packetId,
-          malformed: isMalformedTeamPacket
+          packetId: e.packetId
         })
         // protodef destroyed this parser when it reported the error. Replace it
         // so the next packet can still be consumed.
