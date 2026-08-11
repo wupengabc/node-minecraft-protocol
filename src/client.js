@@ -46,6 +46,7 @@ class Client extends EventEmitter {
     this._socketEventHistory = []
     this._socketActivityCount = 0
     this._ending = false
+    this._mcBundle = []
     const mcData = require('minecraft-data')(version)
     this._supportFeature = mcData.supportFeature
     this.protocolVersion = mcData.version.version
@@ -57,17 +58,46 @@ class Client extends EventEmitter {
     return this.protocolState
   }
 
+  // Upstream of the deserializer: the decompressor once compression is
+  // negotiated, the splitter before that. Both error-recovery and normal
+  // (re)wiring need to agree on this, so derive it in one place.
+  get _deserializerSource () {
+    return this.compressor ? this.decompressor : this.splitter
+  }
+
+  // A hard (non-PartialReadError) parse failure makes protodef call the
+  // Transform callback with an error, which DESTROYS the deserializer.
+  // A destroyed stream can never accept data again, so simply re-piping the
+  // upstream into it silently drops every subsequent packet: inbound traffic
+  // stops being parsed, keep_alive is never answered, backpressure cascades to
+  // the socket, and the connection freezes with no error, no close and no EOF
+  // until the keepalive watchdog fires ~2 minutes later.
+  //
+  // Recover by building a fresh parser for the current state and rewiring the
+  // upstream to it.
+  _rebuildDeserializer () {
+    const source = this._deserializerSource
+    const old = this.deserializer
+
+    if (old) {
+      source.unpipe(old)
+      old.removeAllListeners()
+      // The corpse may still hold buffered chunks; make sure it cannot keep
+      // the process alive or emit late events.
+      if (typeof old.destroy === 'function' && !old.destroyed) old.destroy()
+    }
+
+    this._attachDeserializer(this.protocolState)
+    // A packet failed mid-stream; any partially collected bundle is now
+    // untrustworthy.
+    this._mcBundle = []
+    source.pipe(this.deserializer)
+  }
+
   setSerializer (state) {
     this.serializer = createSerializer({ isServer: this.isServer, version: this.version, state, customPackets: this.customPackets })
-    this.deserializer = createDeserializer({
-      isServer: this.isServer,
-      version: this.version,
-      state,
-      packetsToParse:
-      this.packetsToParse,
-      customPackets: this.customPackets,
-      noErrorLogging: this.hideErrors
-    })
+    this._mcBundle = []
+    this._attachDeserializer(state)
 
     // Build name-to-id reverse mappings for Configuration and Play debug logging
     this._packetNameToIdIn = null
@@ -120,6 +150,22 @@ class Client extends EventEmitter {
       this.emit('error', e)
     })
     this.serializer.on('drain', () => this._drainWriteQueue())
+  }
+
+  // Creates the inbound parser for `state` and wires its handlers. Split out of
+  // setSerializer so a destroyed parser can be replaced after a hard parse
+  // error without disturbing the outbound serializer (which owns the write
+  // queue and the framer pipe).
+  _attachDeserializer (state) {
+    this.deserializer = createDeserializer({
+      isServer: this.isServer,
+      version: this.version,
+      state,
+      packetsToParse:
+      this.packetsToParse,
+      customPackets: this.customPackets,
+      noErrorLogging: this.hideErrors
+    })
 
     this.deserializer.on('error', (e) => {
       let parts = []
@@ -165,8 +211,9 @@ class Client extends EventEmitter {
           packetId,
           malformed: isMalformedTeamPacket
         })
-        // Re-pipe the stream so the next packet can still be consumed.
-        if (!this.compressor) { this.splitter.pipe(this.deserializer) } else { this.decompressor.pipe(this.deserializer) }
+        // protodef destroyed this parser when it reported the error. Replace it
+        // so the next packet can still be consumed.
+        this._rebuildDeserializer()
         return
       }
 
@@ -178,10 +225,9 @@ class Client extends EventEmitter {
         ? `(packet 0x${e.packetId?.toString(16) ?? 'unknown'}, ${e.buffer.length} bytes, ${e.buffer.toString('hex').slice(0, 6)}...)`
         : `(protocol ${this.protocolVersion}, no framed payload attached)`
       e.message = `Parse error for ${e.field} ${packetInfo} : ${e.message}`
-      if (!this.compressor) { this.splitter.pipe(this.deserializer) } else { this.decompressor.pipe(this.deserializer) }
+      this._rebuildDeserializer()
       this.emit('error', e)
     })
-    this._mcBundle = []
     const emitPacket = (parsed) => {
       this.emit('packet', parsed.data, parsed.metadata, parsed.buffer, parsed.fullBuffer)
       this.emit(parsed.metadata.name, parsed.data, parsed.metadata)
@@ -252,11 +298,10 @@ class Client extends EventEmitter {
     if (this.serializer) {
       if (!this.compressor) {
         this.serializer.unpipe()
-        this.splitter.unpipe(this.deserializer)
       } else {
         this.serializer.unpipe(this.compressor)
-        this.decompressor.unpipe(this.deserializer)
       }
+      this._deserializerSource.unpipe(this.deserializer)
 
       this.serializer.removeAllListeners()
       this.deserializer.removeAllListeners()
@@ -265,12 +310,11 @@ class Client extends EventEmitter {
 
     if (!this.compressor) {
       this.serializer.pipe(this.framer)
-      this.splitter.pipe(this.deserializer)
     } else {
       this.serializer.pipe(this.compressor)
       if (globalThis.debugNMP) this.decompressor.on('data', (data) => { console.log('DES>', data.toString('hex')) })
-      this.decompressor.pipe(this.deserializer)
     }
+    this._deserializerSource.pipe(this.deserializer)
 
     this.emit('state', newProperty, oldProperty)
   }

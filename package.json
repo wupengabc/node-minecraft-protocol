@@ -1,6 +1,6 @@
 {
   "name": "@wp2508/minecraft-protocol",
-  "version": "1.67.12",
+  "version": "1.67.13",
   "description": "Parse and serialize minecraft packets, plus authentication and encryption.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
