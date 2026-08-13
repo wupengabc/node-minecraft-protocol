@@ -242,6 +242,19 @@ class Client extends EventEmitter {
       this.emit('raw.' + parsed.metadata.name, parsed.buffer, parsed.metadata)
       this.emit('raw', parsed.buffer, parsed.metadata)
     }
+    // Wraps emitPacket so that a throwing listener cannot abort processing of
+    // the remaining packets in the same bundle or batch. Errors are printed to
+    // stderr (unless hideErrors is set) but do NOT disconnect the bot.
+    const safeEmitPacket = (parsed) => {
+      try {
+        emitPacket(parsed)
+      } catch (err) {
+        if (!this.hideErrors) {
+          // eslint-disable-next-line no-console
+          console.error('[minecraft-protocol] uncaught error in listener for packet', parsed.metadata?.name, err)
+        }
+      }
+    }
     this.deserializer.on('data', (parsed) => {
       parsed.metadata.name = parsed.data.name
       parsed.data = parsed.data.params
@@ -270,18 +283,24 @@ class Client extends EventEmitter {
       }
       if (this._hasBundlePacket && parsed.metadata.name === 'bundle_delimiter') {
         if (this._mcBundle.length) { // End bundle
-          this._mcBundle.forEach(emitPacket)
-          emitPacket(parsed)
+          // Clear _mcBundle before emitting so re-entrant packet processing
+          // (e.g. a listener that triggers another emit) cannot corrupt the list.
+          const bundle = this._mcBundle
           this._mcBundle = []
+          bundle.forEach(safeEmitPacket)
+          emitPacket(parsed)
         } else { // Start bundle
           this._mcBundle.push(parsed)
         }
       } else if (this._mcBundle.length) {
         this._mcBundle.push(parsed)
-        if (this._mcBundle.length > 32) {
-          this._mcBundle.forEach(emitPacket)
+        // Safety valve: if a bundle grows unexpectedly large (server bug or
+        // version mismatch), flush and reset. Do NOT set _hasBundlePacket=false
+        // — the server is still sending bundles and we must keep honouring them.
+        if (this._mcBundle.length > 1024) {
+          const oversized = this._mcBundle
           this._mcBundle = []
-          this._hasBundlePacket = false
+          oversized.forEach(safeEmitPacket)
         }
       } else {
         emitPacket(parsed)
@@ -356,6 +375,11 @@ class Client extends EventEmitter {
       if (this.ended) return
       if (record) recordSocketEvent(event)
       this.ended = true
+      // Clear pending write queues so that a socket drain event firing after
+      // the connection is closed cannot attempt to write to a reset socket
+      // (which would produce a spurious "write ECONNRESET" error).
+      this._writeQueue = []
+      this._priorityWriteQueue = []
       clearTimeout(this.closeTimer)
       this.socket.removeListener('close', onClose)
       this.socket.removeListener('end', onEnd)
@@ -502,7 +526,7 @@ class Client extends EventEmitter {
   }
 
   _drainWriteQueue () {
-    if (this._drainingWrites || !this.serializer?.writable) return
+    if (this._drainingWrites || this.ended || !this.serializer?.writable) return
     this._drainingWrites = true
 
     while (this._writeQueue.length || this._priorityWriteQueue.length) {
