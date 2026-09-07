@@ -23,6 +23,22 @@ const replaceablePackets = new Set([
   'tick_end'
 ])
 
+// Packets whose relative order is validated server-side (movement checks,
+// teleport ack/echo ordering, 26.1+ tick cadence). A priority write must never
+// overtake these: on laggy links the priority queue (attack / arm_animation /
+// keep_alive) would otherwise be flushed before movement packets that were
+// queued earlier, making the server process an attack / keepalive against a
+// stale position and tripping anti-cheat checks.
+const orderingSensitivePackets = new Set([
+  'teleport_confirm',
+  'flying',
+  'look',
+  'position',
+  'position_look',
+  'player_input',
+  'tick_end'
+])
+
 class Client extends EventEmitter {
   constructor (isServer, version, customPackets, hideErrors = false) {
     super()
@@ -531,7 +547,13 @@ class Client extends EventEmitter {
 
     while (this._writeQueue.length || this._priorityWriteQueue.length) {
       if (this.socket?.writableNeedDrain || this.framer.readableLength >= this.framer.readableHighWaterMark) break
-      const packet = this._priorityWriteQueue.shift() || this._writeQueue.shift()
+      // Ordering-sensitive packets queued earlier always go out first, even
+      // when a priority packet is waiting: they must reach the server in the
+      // order the caller produced them (e.g. teleport_confirm before the
+      // echoed position_look, movement before tick_end).
+      const packet = (this._writeQueue.length && orderingSensitivePackets.has(this._writeQueue[0].name))
+        ? this._writeQueue.shift()
+        : (this._priorityWriteQueue.shift() || this._writeQueue.shift())
       if (packet.name === 'keep_alive') this._lastKeepAliveWriteAt = Date.now()
       if (!this.serializer.write(packet)) break
     }
