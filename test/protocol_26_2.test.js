@@ -82,6 +82,42 @@ describe('protocol 26.2 (776)', function () {
     assert.strictEqual(metadataTypes['42'], 'humanoid_arm')
   })
 
+  it('round-trips the fixed 26.2 interact layout', function () {
+    const serializer = protocol.createSerializer({
+      state: states.PLAY,
+      version: '26.2',
+      isServer: false
+    })
+    const deserializer = protocol.createDeserializer({
+      state: states.PLAY,
+      version: '26.2',
+      isServer: true,
+      noErrorLogging: true
+    })
+    const packet = {
+      name: 'use_entity',
+      params: {
+        target: 42,
+        hand: 1,
+        location: { x: 0.25, y: 0.75, z: -0.5 },
+        sneaking: true
+      }
+    }
+
+    const buffer = serializer.createPacketBuffer(packet)
+    const parsed = deserializer.parsePacketBuffer(buffer)
+
+    assert.strictEqual(parsed.metadata.size, buffer.length)
+    assert.strictEqual(parsed.data.name, packet.name)
+    assert.strictEqual(parsed.data.params.target, packet.params.target)
+    assert.strictEqual(parsed.data.params.hand, packet.params.hand)
+    assert.strictEqual(parsed.data.params.sneaking, packet.params.sneaking)
+    assert.ok(Math.abs(parsed.data.params.location.x - packet.params.location.x) < 0.001)
+    assert.ok(Math.abs(parsed.data.params.location.y - packet.params.location.y) < 0.001)
+    assert.ok(Math.abs(parsed.data.params.location.z - packet.params.location.z) < 0.001)
+    assert.ok(buffer.equals(serializer.createPacketBuffer(parsed.data)))
+  })
+
   it('decodes and round-trips a captured 26.2 teams packet', function () {
     const raw = Buffer.from(
       '6d0467637a410008000467637a410800000800000001010f00010367637a',

@@ -277,6 +277,18 @@ describe('Protocol 26.1 (775) packet round-trip', function () {
       )
     })
 
+    it('use_entity (fixed hand + lpVec3 layout)', function () {
+      rt({
+        name: 'use_entity',
+        params: {
+          target: 42,
+          hand: 1,
+          location: { x: 0.25, y: 0.75, z: -0.5 },
+          sneaking: true
+        }
+      })
+    })
+
     it('set_game_rule (string + string, 26.1-new id 0x39)', function () {
       fc.assert(
         fc.property(asciiString, asciiString, (name, value) => {
