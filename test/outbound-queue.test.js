@@ -14,12 +14,13 @@ describe('outbound packet queue', function () {
         return true
       }
     }
+    client.ended = false
     client.socket = { writableNeedDrain: true }
     client.framer = { readableLength: 0, readableHighWaterMark: 16 * 1024 }
     return { client, writes }
   }
 
-  it('sends keepalive replies before queued normal packets after a stall', function () {
+  it('preserves movement ordering before keepalive replies after a stall', function () {
     const { client, writes } = makeClient()
     client.write('position', { x: 1 })
     client.write('block_dig', { status: 0 })
@@ -28,7 +29,7 @@ describe('outbound packet queue', function () {
     client.socket.writableNeedDrain = false
     client._drainWriteQueue()
 
-    assert.deepStrictEqual(writes.map(packet => packet.name), ['keep_alive', 'position', 'block_dig'])
+    assert.deepStrictEqual(writes.map(packet => packet.name), ['position', 'keep_alive', 'block_dig'])
   })
 
   it('keeps only the latest queued movement packet', function () {

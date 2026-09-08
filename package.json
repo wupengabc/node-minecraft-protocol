@@ -62,7 +62,7 @@
     "debug": "^4.3.2",
     "endian-toggle": "^0.0.0",
     "lodash.merge": "^4.3.0",
-    "minecraft-data": "npm:@wp2508/minecraft-data@^3.111.2",
+    "minecraft-data": "npm:@wp2508/minecraft-data@^3.111.3",
     "minecraft-folder-path": "^1.2.0",
     "node-fetch": "^2.6.1",
     "node-rsa": "^0.4.2",

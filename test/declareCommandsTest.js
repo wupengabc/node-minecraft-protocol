@@ -45,7 +45,8 @@ describe('declare_commands handling', () => {
         { children: [1] },
         { children: [2], extraNodeData: { name: 'msg' } },
         { children: [], extraNodeData: { name: 'message', parser: 'minecraft:message' } }
-      ]
+      ],
+      rootIndex: 0
     })
 
     client._signedChat('/msg hello there', { timestamp: 1n, salt: 1n })
