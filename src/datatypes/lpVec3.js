@@ -74,13 +74,8 @@ function writeLpVec3 (value, buffer, offset) {
 
   const scale = Math.ceil(max)
   const needsContinuation = scale > 3
-  const scaleByte = needsContinuation ? ((scale % 4) | 4) : scale
-
-  const pX = pack(x / scale)
-  const pY = pack(y / scale)
-  const pZ = pack(z / scale)
-
-  const packed = scaleByte + pX * 0x8 + pY * 0x40000 + pZ * 0x200000000
+  const markers = needsContinuation ? ((scale % 4) | 4) : scale
+  const packed = markers + pack(x / scale) * 0x8 + pack(y / scale) * 0x40000 + pack(z / scale) * 0x200000000
   buffer.writeUInt8(packed % 0x100, offset)
   buffer.writeUInt8(Math.floor(packed / 0x100) % 0x100, offset + 1)
   buffer.writeUInt32BE(Math.floor(packed / 0x10000) % 0x100000000, offset + 2)

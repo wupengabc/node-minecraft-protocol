@@ -1,6 +1,6 @@
 {
   "name": "@wp2508/minecraft-protocol",
-  "version": "1.67.18",
+  "version": "1.67.20",
   "description": "Parse and serialize minecraft packets, plus authentication and encryption.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
@@ -42,7 +42,7 @@
     "LICENSE"
   ],
   "devDependencies": {
-    "@types/node": "^25.2.3",
+    "@types/node": "^26.1.1",
     "espower-loader": "^1.0.0",
     "fast-check": "^4.8.0",
     "intelli-espower-loader": "^1.0.0",
@@ -62,7 +62,7 @@
     "debug": "^4.3.2",
     "endian-toggle": "^0.0.0",
     "lodash.merge": "^4.3.0",
-    "minecraft-data": "npm:@wp2508/minecraft-data@^3.111.0",
+    "minecraft-data": "npm:@wp2508/minecraft-data@^3.111.2",
     "minecraft-folder-path": "^1.2.0",
     "node-fetch": "^2.6.1",
     "node-rsa": "^0.4.2",
