@@ -31,7 +31,7 @@ function createClient (options) {
   if (!mcData) throw new Error(`unsupported protocol version: ${optVersion}`)
   if (!mcData.protocol) {
     const err = new Error(`Missing protocol data: the version directory for ${optVersion} (data/pc/${mcData.version.majorVersion}/) does not contain protocol.json`)
-    if (mcData.version.version === 775 || mcData.version.version === 776) tagWith261(err, mcData.version.version)
+    if (mcData.version.version >= 775) tagWith261(err, mcData.version.version)
     throw err
   }
   const version = mcData.version
@@ -55,6 +55,33 @@ function createClient (options) {
   const client = new Client(false, version.minecraftVersion, options.customPackets, hideErrors)
 
   tcpDns(client, options)
+
+  // Deferred-connection support: when options.autoConnect === false the socket
+  // is not opened automatically. Instead the caller starts it by calling
+  // client.startConnection(). All internal call sites that used to invoke
+  // options.connect(client) directly are routed through a gate so the behavior
+  // is identical once started, and the gate is idempotent.
+  const autoConnect = options.autoConnect !== false
+  const userConnect = options.connect
+  let connectStarted = false
+  let startRequested = false
+  function startConnection () {
+    if (connectStarted) return
+    startRequested = true
+    if (authPending) return // wait until auth finishes; it will re-enter via gatedConnect
+    connectStarted = true
+    userConnect(client)
+  }
+  // Auth flows call options.connect(client) when they finish. Replace it with a
+  // gate that connects immediately by default, or only after startConnection().
+  let authPending = !autoConnect
+  function gatedConnect () {
+    authPending = false
+    if (autoConnect || startRequested) startConnection()
+  }
+  options.connect = gatedConnect
+  client.startConnection = startConnection
+
   if (options.auth instanceof Function) {
     options.auth(client, options)
     onReady()

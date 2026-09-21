@@ -228,7 +228,7 @@ class Client extends EventEmitter {
       // it silently decodes garbage and under-consumes the buffer. So a real
       // 0x6d parse error is a genuine signal and swallowing it only hid
       // problems. See test/protocol_26_2.test.js for the field-order pins.
-      if ((this.protocolVersion === 775 || this.protocolVersion === 776) && isUnknownPacket && e.buffer) {
+      if (this.protocolVersion >= 775 && isUnknownPacket && e.buffer) {
         this.emit('rawPacket', {
           buffer: e.buffer,
           state: this.protocolState,
@@ -280,7 +280,7 @@ class Client extends EventEmitter {
       // state's packet table (name is numeric, params is undefined), emit 'rawPacket'
       // instead of normal packet events. Do NOT throw 'error', do NOT disconnect socket.
       // The read loop continues consuming subsequent packets normally.
-      if ((this.protocolVersion === 775 || this.protocolVersion === 776) && typeof parsed.metadata.name === 'number' && parsed.data === undefined) {
+      if (this.protocolVersion >= 775 && typeof parsed.metadata.name === 'number' && parsed.data === undefined) {
         this.emit('rawPacket', {
           buffer: parsed.fullBuffer || parsed.buffer,
           state: this.protocolState,

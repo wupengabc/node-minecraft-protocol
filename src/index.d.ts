@@ -56,6 +56,8 @@ declare module 'minecraft-protocol' {
 		compressionThreshold: string
 		ended: boolean
 		connect(port: number, host: string): void
+		/** Starts the connection when the client was created with `autoConnect: false`. No-op otherwise. */
+		startConnection(): void
 		setSocket(socket: Socket): void
 		end(reason?: string): void
 		registerChannel(name: string, typeDefinition: any, custom?: boolean): void
@@ -172,6 +174,8 @@ declare module 'minecraft-protocol' {
 		skipValidation?: boolean
 		stream?: Stream
 		connect?: (client: Client) => void
+		/** When false, do not open the socket automatically; call client.startConnection() to connect. Defaults to true. */
+		autoConnect?: boolean
 		agent?: Agent
 		fakeHost?: string
 		profilesFolder?: string | false
