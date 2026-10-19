@@ -13,31 +13,6 @@ const createDecipher = require('./transforms/encryption').createDecipher
 const [readVarInt] = require('protodef').types.varint
 
 const closeTimeout = 30 * 1000
-const replaceablePackets = new Set([
-  'flying',
-  'look',
-  'player_input',
-  'position',
-  'position_look',
-  'steer_vehicle',
-  'tick_end'
-])
-
-// Packets whose relative order is validated server-side (movement checks,
-// teleport ack/echo ordering, 26.1+ tick cadence). A priority write must never
-// overtake these: on laggy links the priority queue (attack / arm_animation /
-// keep_alive) would otherwise be flushed before movement packets that were
-// queued earlier, making the server process an attack / keepalive against a
-// stale position and tripping anti-cheat checks.
-const orderingSensitivePackets = new Set([
-  'teleport_confirm',
-  'flying',
-  'look',
-  'position',
-  'position_look',
-  'player_input',
-  'tick_end'
-])
 
 class Client extends EventEmitter {
   constructor (isServer, version, customPackets, hideErrors = false) {
@@ -511,14 +486,15 @@ class Client extends EventEmitter {
   }
 
   write (name, params) {
-    this._queueWrite(name, params, false)
+    this._queueWrite(name, params)
   }
 
   writePriority (name, params) {
-    this._queueWrite(name, params, true)
+    // Keep the API, but all packets must preserve the caller's chronology.
+    this._queueWrite(name, params)
   }
 
-  _queueWrite (name, params, priority) {
+  _queueWrite (name, params) {
     if (!this.serializer?.writable) return
     if (debug.enabled && !debugSkip.includes(name)) {
       const id = this._packetNameToIdOut?.[name]
@@ -527,17 +503,7 @@ class Client extends EventEmitter {
       debug(params)
     }
 
-    const queue = priority ? this._priorityWriteQueue : this._writeQueue
-    if (!priority && replaceablePackets.has(name)) {
-      for (let index = queue.length - 1; index >= 0; index--) {
-        if (queue[index].name === name) {
-          queue[index] = { name, params }
-          this._drainWriteQueue()
-          return
-        }
-      }
-    }
-    queue.push({ name, params })
+    this._writeQueue.push({ name, params })
     this._drainWriteQueue()
   }
 
@@ -545,15 +511,9 @@ class Client extends EventEmitter {
     if (this._drainingWrites || this.ended || !this.serializer?.writable) return
     this._drainingWrites = true
 
-    while (this._writeQueue.length || this._priorityWriteQueue.length) {
-      if (this.socket?.writableNeedDrain || this.framer.readableLength >= this.framer.readableHighWaterMark) break
-      // Ordering-sensitive packets queued earlier always go out first, even
-      // when a priority packet is waiting: they must reach the server in the
-      // order the caller produced them (e.g. teleport_confirm before the
-      // echoed position_look, movement before tick_end).
-      const packet = (this._writeQueue.length && orderingSensitivePackets.has(this._writeQueue[0].name))
-        ? this._writeQueue.shift()
-        : (this._priorityWriteQueue.shift() || this._writeQueue.shift())
+    while (this._writeQueue.length) {
+      if (this.serializer.writableNeedDrain || this.socket?.writableNeedDrain || this.framer.readableLength >= this.framer.readableHighWaterMark) break
+      const packet = this._writeQueue.shift()
       if (packet.name === 'keep_alive') this._lastKeepAliveWriteAt = Date.now()
       if (!this.serializer.write(packet)) break
     }
