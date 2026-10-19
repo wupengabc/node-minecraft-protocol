@@ -52,6 +52,8 @@ declare module 'minecraft-protocol' {
 		version: string
 		write(name: string, params: any): void
 		writePriority(name: string, params: any): void
+		/** Local queue or stream pressure; false does not imply delivery to the server. */
+		readonly writeBackpressured: boolean
 		writeRaw(buffer: any): void
 		compressionThreshold: string
 		ended: boolean

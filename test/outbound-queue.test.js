@@ -21,6 +21,23 @@ describe('outbound packet queue', function () {
     return { client, writes }
   }
 
+  it('exposes queued and downstream pressure until the ordered backlog drains', function () {
+    const { client } = makeClient()
+    assert.strictEqual(client.writeBackpressured, true)
+    client.write('tick_end', {})
+    client.socket.writableNeedDrain = false
+    assert.strictEqual(client.writeBackpressured, true, 'the pending FIFO still blocks new optional actions')
+    client._drainWriteQueue()
+    assert.strictEqual(client.writeBackpressured, false)
+    client.serializer.writableNeedDrain = true
+    assert.strictEqual(client.writeBackpressured, true)
+    client.serializer.writableNeedDrain = false
+    client.framer.readableLength = client.framer.readableHighWaterMark
+    assert.strictEqual(client.writeBackpressured, true)
+    client.framer.readableLength = 0
+    assert.strictEqual(client.writeBackpressured, false)
+  })
+
   it('preserves caller order for movement, actions and keepalive replies after a stall', function () {
     const { client, writes } = makeClient()
     client.write('position', { x: 1 })

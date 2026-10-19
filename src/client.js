@@ -494,6 +494,11 @@ class Client extends EventEmitter {
     this._queueWrite(name, params)
   }
 
+  get writeBackpressured () {
+    return this._writeQueue.length > 0 || !!this.serializer?.writableNeedDrain ||
+      !!this.socket?.writableNeedDrain || this.framer.readableLength >= this.framer.readableHighWaterMark
+  }
+
   _queueWrite (name, params) {
     if (!this.serializer?.writable) return
     if (debug.enabled && !debugSkip.includes(name)) {
