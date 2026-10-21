@@ -1,183 +1,174 @@
 /* eslint-env mocha */
 
 const assert = require('assert')
-const { Writable } = require('stream')
-const Client = require('../src/client')
+const { stalledClient, decodeWire } = require('./common/outbound')
+const [readVarInt, writeVarInt, sizeOfVarInt] = require('protodef').types.varint
+
+function plainFrame (client, name, params) {
+  const payload = client.serializer.createPacketBuffer({ name, params })
+  const frame = Buffer.alloc(sizeOfVarInt(payload.length) + payload.length)
+  const size = writeVarInt(payload.length, frame, 0)
+  payload.copy(frame, size)
+  return frame
+}
 
 describe('outbound packet queue', function () {
-  function makeClient () {
-    const client = new Client(false, '26.1.2', undefined, true)
-    const writes = []
-    client.serializer = {
-      writable: true,
-      write: (packet) => {
-        writes.push(packet)
-        return true
-      }
+  it('preserves movement, teleport, action and every tick boundary through real socket backpressure', async function () {
+    const fixture = stalledClient()
+    const { client, socket } = fixture
+    client.state = 'play'
+    const flags = { onGround: true, hasHorizontalCollision: false }
+    const packets = [
+      ['position', { x: 1, y: 2, z: 3, flags }],
+      ['position_look', { x: 2, y: 2, z: 3, yaw: 90, pitch: 0, flags }],
+      ['position', { x: 3, y: 2, z: 3, flags }],
+      ['teleport_confirm', { teleportId: 7 }],
+      ['position_look', { x: 10, y: 2, z: 3, yaw: 0, pitch: 0, flags }],
+      ['held_item_slot', { slotId: 2 }],
+      ['attack', { entityId: 42 }],
+      ['arm_animation', { hand: 0 }],
+      ['tick_end', {}],
+      ['look', { yaw: 90, pitch: 0, flags }],
+      ['tick_end', {}],
+      ['tick_end', {}],
+      ['keep_alive', { keepAliveId: 1n }]
+    ]
+    assert.strictEqual(client.writeBackpressured, true)
+    for (const [name, params] of packets) {
+      if (name === 'attack' || name === 'arm_animation' || name === 'keep_alive') client.writePriority(name, params)
+      else client.write(name, params)
     }
-    client.ended = false
-    client.socket = { writableNeedDrain: true }
-    client.framer = { readableLength: 0, readableHighWaterMark: 16 * 1024 }
-    return { client, writes }
-  }
-
-  it('exposes queued and downstream pressure until the ordered backlog drains', function () {
-    const { client } = makeClient()
+    assert.strictEqual(fixture.chunks.length, 1, 'all packets wait behind the stalled socket write')
     assert.strictEqual(client.writeBackpressured, true)
-    client.write('tick_end', {})
-    client.socket.writableNeedDrain = false
-    assert.strictEqual(client.writeBackpressured, true, 'the pending FIFO still blocks new optional actions')
-    client._drainWriteQueue()
+    await fixture.flush()
+    const decoded = decodeWire(fixture.wire(), packets.map(([name]) => ['play', name]))
+    assert.deepStrictEqual(decoded.slice(0, 3).map(p => p.x), [1, 2, 3])
+    assert.strictEqual(decoded[4].x, 10)
+    assert.strictEqual(decoded[5].slotId, 2)
     assert.strictEqual(client.writeBackpressured, false)
-    client.serializer.writableNeedDrain = true
-    assert.strictEqual(client.writeBackpressured, true)
-    client.serializer.writableNeedDrain = false
-    client.framer.readableLength = client.framer.readableHighWaterMark
-    assert.strictEqual(client.writeBackpressured, true)
-    client.framer.readableLength = 0
-    assert.strictEqual(client.writeBackpressured, false)
+    socket.destroy()
   })
 
-  it('preserves caller order for movement, actions and keepalive replies after a stall', function () {
-    const { client, writes } = makeClient()
-    client.write('position', { x: 1 })
-    client.write('block_dig', { status: 0 })
-    client.writePriority('keep_alive', { keepAliveId: 1 })
-
-    assert.deepStrictEqual(writes, [])
-    client.socket.writableNeedDrain = false
-    client._drainWriteQueue()
-
-    assert.deepStrictEqual(writes.map(packet => packet.name), ['position', 'block_dig', 'keep_alive'])
-    assert.strictEqual(typeof client._lastKeepAliveWriteAt, 'number')
+  it('orders raw and named packets together and snapshots parameters before a stall', async function () {
+    const fixture = stalledClient()
+    const { client, socket } = fixture
+    client.state = 'play'
+    const params = { slotId: 1 }
+    client.write('held_item_slot', params)
+    params.slotId = 9
+    client.writeRaw(client.serializer.createPacketBuffer({ name: 'held_item_slot', params: { slotId: 2 } }))
+    client.writePriority('held_item_slot', { slotId: 3 })
+    await fixture.flush()
+    const packets = decodeWire(fixture.wire(), Array(3).fill(['play', 'held_item_slot']))
+    assert.deepStrictEqual(packets.map(p => p.slotId), [1, 2, 3])
+    socket.destroy()
   })
 
-  it('preserves every queued position and mixed movement update after a stall', function () {
-    const { client, writes } = makeClient()
-    const packets = [
-      { name: 'position', params: { x: 1 } },
-      { name: 'position_look', params: { x: 2, yaw: 90 } },
-      { name: 'position', params: { x: 3 } },
-      { name: 'position', params: { x: 4 } }
-    ]
-    for (const packet of packets) client.write(packet.name, packet.params)
-
-    assert.deepStrictEqual(writes, [])
-    client.socket.writableNeedDrain = false
-    client._drainWriteQueue()
-
-    assert.deepStrictEqual(writes, packets)
-  })
-
-  it('keeps teleport acknowledgements between preceding movement and their echoes after a stall', function () {
-    const { client, writes } = makeClient()
-    const packets = [
-      { name: 'position_look', params: { x: 1 } },
-      { name: 'teleport_confirm', params: { teleportId: 7 } },
-      { name: 'position_look', params: { x: 10 } },
-      { name: 'teleport_confirm', params: { teleportId: 8 } },
-      { name: 'position_look', params: { x: 20 } }
-    ]
-    for (const packet of packets) client.write(packet.name, packet.params)
-
-    assert.deepStrictEqual(writes, [])
-    client.socket.writableNeedDrain = false
-    client._drainWriteQueue()
-
-    assert.deepStrictEqual(writes, packets)
-  })
-
-  it('preserves every tick_end and movement boundary after a stall', function () {
-    const { client, writes } = makeClient()
-    const packets = [
-      { name: 'position', params: { x: 1 } },
-      { name: 'tick_end', params: {} },
-      { name: 'look', params: { yaw: 90 } },
-      { name: 'tick_end', params: {} },
-      { name: 'position', params: { x: 2 } },
-      { name: 'tick_end', params: {} },
-      { name: 'tick_end', params: {} }
-    ]
-    for (const packet of packets) client.write(packet.name, packet.params)
-
-    assert.deepStrictEqual(writes, [])
-    client.socket.writableNeedDrain = false
-    client._drainWriteQueue()
-
-    assert.deepStrictEqual(writes, packets)
-  })
-
-  it('keeps a priority attack after preceding actions and movement and before the following tick_end', function () {
-    const { client, writes } = makeClient()
-    client.write('block_dig', { status: 5 })
-    client.write('position', { x: 1 })
-    client.writePriority('use_entity', { target: 42, mouse: 1, sneaking: false })
-    client.writePriority('arm_animation', { hand: 0 })
+  it('drains final queued bytes before ending the socket', async function () {
+    const fixture = stalledClient()
+    const { client, socket } = fixture
+    client.state = 'play'
     client.write('tick_end', {})
-
-    assert.deepStrictEqual(writes, [])
-    client.socket.writableNeedDrain = false
-    client._drainWriteQueue()
-
-    assert.deepStrictEqual(writes.map(packet => packet.name), [
-      'block_dig', 'position', 'use_entity', 'arm_animation', 'tick_end'
-    ])
+    client.end('test')
+    await fixture.flush()
+    assert.strictEqual(socket.writableEnded, true)
+    decodeWire(fixture.wire(), [['play', 'tick_end']])
+    socket.destroy()
   })
 
-  it('keeps keepalive replies behind earlier non-movement packets after a stall', function () {
-    const { client, writes } = makeClient()
-    client.write('window_click', { windowId: 1 })
-    client.writePriority('keep_alive', { keepAliveId: 1 })
-
-    assert.deepStrictEqual(writes, [])
-    assert.strictEqual(client._lastKeepAliveWriteAt, undefined)
-    client.socket.writableNeedDrain = false
-    client._drainWriteQueue()
-
-    assert.deepStrictEqual(writes.map(packet => packet.name), ['window_click', 'keep_alive'])
+  it('keeps an encryption response plaintext and encrypts only subsequent bytes during a stall', async function () {
+    const fixture = stalledClient()
+    const { client, socket } = fixture
+    client.state = 'login'
+    const params = { sharedSecret: Buffer.from([1, 2]), verifyToken: Buffer.from([3, 4]) }
+    const plaintext = plainFrame(client, 'encryption_begin', params)
+    client.write('encryption_begin', params)
+    const secret = Buffer.alloc(16, 13)
+    client.setEncryption(secret)
+    client.write('login_acknowledged', {})
+    client.state = 'configuration'
+    client.write('finish_configuration', {})
+    await fixture.flush()
+    const wire = fixture.wire()
+    assert.deepStrictEqual(wire.subarray(0, plaintext.length), plaintext)
+    decodeWire(plaintext, [['login', 'encryption_begin']])
+    decodeWire(wire.subarray(plaintext.length), [['login', 'login_acknowledged'], ['configuration', 'finish_configuration']], { secret })
+    socket.destroy()
   })
 
-  it('waits for serializer drain without losing, duplicating or reordering queued packets', async function () {
-    const { client, writes } = makeClient()
-    let completeWrite
-    client.serializer = new Writable({
-      objectMode: true,
-      highWaterMark: 1,
-      write (packet, encoding, callback) {
-        writes.push(packet)
-        completeWrite = callback
-      }
+  it('keeps compression negotiation uncompressed and applies threshold changes only to later packets', async function () {
+    const fixture = stalledClient('26.2', true)
+    const { client, socket } = fixture
+    client.state = 'login'
+    const plaintext = plainFrame(client, 'compress', { threshold: 0 })
+    client.write('compress', { threshold: 0 })
+    client.setCompressionThreshold(0)
+    client.write('success', { uuid: '00000000-0000-0000-0000-000000000001', sessionId: '00000000-0000-0000-0000-000000000001', username: 'test', properties: [] })
+    client.setCompressionThreshold(10000)
+    client.write('success', { uuid: '00000000-0000-0000-0000-000000000002', sessionId: '00000000-0000-0000-0000-000000000002', username: 'test2', properties: [] })
+    await fixture.flush()
+    const wire = fixture.wire()
+    const compressed = wire.subarray(plaintext.length)
+    const compressedLength = readVarInt(compressed, 0)
+    const uncompressed = compressed.subarray(compressedLength.size + compressedLength.value)
+    // The same compression envelope carries an inflated length for the first
+    // success and zero for the second, whose threshold has changed.
+    assert.ok(readVarInt(compressed, readVarInt(compressed, 0).size).value > 0)
+    assert.strictEqual(readVarInt(uncompressed, readVarInt(uncompressed, 0).size).value, 0)
+    assert.deepStrictEqual(wire.subarray(0, plaintext.length), plaintext)
+    decodeWire(plaintext, [['login', 'compress']], { isServer: false })
+    const decoded = decodeWire(wire.subarray(plaintext.length), [['login', 'success'], ['login', 'success']], { isServer: false, compression: true })
+    assert.deepStrictEqual(decoded.map(p => p.username), ['test', 'test2'])
+    socket.destroy()
+  })
+
+  it('retains large encoded output across state changes beyond serializer high water marks', async function () {
+    const fixture = stalledClient()
+    const { client, socket } = fixture
+    const secret = Buffer.alloc(16, 5)
+    client.setCompressionThreshold(256)
+    client.setEncryption(secret)
+    client.state = 'play'
+    const expected = []
+    for (let i = 0; i < 100; i++) {
+      client.write('custom_payload', { channel: 'test:backlog', data: Buffer.alloc(2048, i) })
+      expected.push(['play', 'custom_payload'])
+    }
+    client.write('configuration_acknowledged', {})
+    expected.push(['play', 'configuration_acknowledged'])
+    client.state = 'configuration'
+    client.write('custom_payload', { channel: 'test:configuration', data: Buffer.alloc(2048, 123) })
+    expected.push(['configuration', 'custom_payload'])
+    client.write('finish_configuration', {})
+    expected.push(['configuration', 'finish_configuration'])
+    client.state = 'play'
+    client.write('tick_end', {})
+    expected.push(['play', 'tick_end'])
+    client.end('test')
+    await fixture.flush()
+    const decoded = decodeWire(fixture.wire(), expected, { secret, compression: true })
+    for (let i = 0; i < 100; i++) assert.deepStrictEqual(decoded[i].data, Buffer.alloc(2048, i))
+    assert.deepStrictEqual(decoded[101].data, Buffer.alloc(2048, 123))
+    socket.destroy()
+  })
+
+  it('reports serialization errors with the write-time state without poisoning later codecs', async function () {
+    const fixture = stalledClient()
+    const { client, socket } = fixture
+    const errors = []
+    client.on('error', err => {
+      errors.push(err)
+      client.write('position', {}) // A malformed error-response must not recurse.
     })
-    client.serializer.on('drain', () => client._drainWriteQueue())
-    const position = { name: 'position', params: { x: 1 } }
-    const attack = { name: 'use_entity', params: { target: 42, mouse: 1, sneaking: false } }
-    const tickEnd = { name: 'tick_end', params: {} }
-    client.write(position.name, position.params)
-    client.writePriority(attack.name, attack.params)
-    client.socket.writableNeedDrain = false
-    client._drainWriteQueue()
-
-    assert.deepStrictEqual(writes, [position])
-    assert.strictEqual(client.serializer.writableNeedDrain, true)
-    client.write(tickEnd.name, tickEnd.params)
-    client._drainWriteQueue()
-    assert.strictEqual(client.serializer.writableLength, 1, 'new writes must wait for serializer drain')
-    assert.deepStrictEqual(client._writeQueue, [attack, tickEnd])
-
-    completeWrite()
-    await new Promise(resolve => setImmediate(resolve))
-    assert.deepStrictEqual(writes, [position, attack])
-    assert.deepStrictEqual(client._writeQueue, [tickEnd])
-
-    completeWrite()
-    await new Promise(resolve => setImmediate(resolve))
-    assert.deepStrictEqual(writes, [position, attack, tickEnd])
-    assert.deepStrictEqual(client._writeQueue, [])
-
-    completeWrite()
-    await new Promise(resolve => setImmediate(resolve))
-    assert.strictEqual(client.serializer.writableNeedDrain, false)
-    assert.deepStrictEqual(writes, [position, attack, tickEnd])
-    client.serializer.destroy()
+    client.state = 'play'
+    client.write('position', { x: 'invalid', y: 0, z: 0 })
+    client.write('held_item_slot', { slotId: 2 })
+    client.state = 'configuration'
+    client.write('finish_configuration', {})
+    await fixture.flush()
+    assert.strictEqual(errors.length, 1)
+    assert.ok(errors[0].message.startsWith('Serialization error for play.toServer'))
+    decodeWire(fixture.wire(), [['play', 'held_item_slot'], ['configuration', 'finish_configuration']])
+    socket.destroy()
   })
 })

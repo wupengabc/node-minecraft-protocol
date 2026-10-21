@@ -1,10 +1,14 @@
 const states = require('../states')
 const signedChatPlugin = require('./chat')
 const uuid = require('uuid-1345')
+const { concat } = require('../transforms/binaryStream')
 
 module.exports = function (client, options) {
   client.serverFeatures = {}
   let configurationHandlers = null
+  client.on('ping', ({ id }) => {
+    if (client.state === states.CONFIGURATION) client.write('pong', { id })
+  })
   client.on('server_data', (packet) => {
     client.serverFeatures = {
       chatPreview: packet.previewsChat,
@@ -12,10 +16,10 @@ module.exports = function (client, options) {
     }
   })
 
-  client.once('login', (packet) => {
+  client.on('login', (packet) => {
     if (packet.enforcesSecureChat) client.serverFeatures.enforcesSecureChat = packet.enforcesSecureChat
     const mcData = require('minecraft-data')(client.version)
-    if (mcData.supportFeature('useChatSessions') && client.profileKeys && client.cipher && client.session.selectedProfile.id === client.uuid.replace(/-/g, '')) {
+    if (mcData.supportFeature('useChatSessions') && packet.onlineMode !== false && !options.disableChatSigning && client.profileKeys && client.cipher && client.session?.selectedProfile.id === client.uuid.replace(/-/g, '')) {
       client._session = {
         index: 0,
         uuid: uuid.v4fast()
@@ -57,6 +61,14 @@ module.exports = function (client, options) {
       // the client is about to switch its parser to configuration.
       if (returningFromPlay) client.write('configuration_acknowledged', {})
       client.state = states.CONFIGURATION
+      // Vanilla announces its brand once, on login, before Client Information.
+      if (!returningFromPlay) {
+        const brand = Buffer.from(options.brand ?? 'minecraft-protocol', 'utf8')
+        client.write('custom_payload', {
+          channel: 'minecraft:brand',
+          data: concat('varint', brand.length, 'buffer', brand)
+        })
+      }
       // Mirror the vanilla client, which sends Client Information during the
       // configuration phase. Some servers (e.g. Hypixel) wait for it before
       // sending finish_configuration and will close the socket otherwise.

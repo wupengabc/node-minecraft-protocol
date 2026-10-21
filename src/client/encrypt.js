@@ -19,10 +19,11 @@ module.exports = function (client, options) {
         client.end('encryptionSecretError')
         return
       }
-      if (options.haveCredentials) {
+      // Older login packets have no flag; only an explicit false skips session authentication.
+      if (options.haveCredentials && packet.shouldAuthenticate !== false) {
         joinServerRequest(onJoinServerResponse)
       } else {
-        if (packet.serverId !== '-') {
+        if (packet.shouldAuthenticate !== false && packet.serverId !== '-') {
           debug('This server appears to be an online server and you are providing no password, the authentication will probably fail')
         }
         sendEncryptionKeyResponse()

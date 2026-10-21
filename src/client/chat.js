@@ -1,4 +1,5 @@
 const crypto = require('crypto')
+const states = require('../states')
 const { computeChatChecksum } = require('../datatypes/checksums')
 const concat = require('../transforms/binaryStream').concat
 const { processNbtMessage } = require('prismarine-chat')
@@ -34,6 +35,28 @@ module.exports = function (client, options) {
 
   // This stores the last 128 inbound (signed) messages for 1.19.3 chat validation
   client._signatureCache = new SignatureCache()
+
+  function sendChatAcknowledgement () {
+    const count = client._lastSeenMessages.pending
+    client._lastSeenMessages.pending = 0
+    if (count > 0) client.write('message_acknowledgement', { count })
+  }
+
+  if (mcData.supportFeature('useChatSessions')) {
+    // These must run before play.js acknowledges configuration or prepares a
+    // fresh session. reset_chat only resets the displayed chat, not signing.
+    client.prependListener('start_configuration', () => {
+      if (client.state === states.PLAY) sendChatAcknowledgement()
+    })
+    client.prependListener('login', () => {
+      client._players = {}
+      client._lastChatSignature = null
+      client._lastRejectedMessage = null
+      client._lastSeenMessages = new LastSeenMessagesWithInvalidation()
+      client._signatureCache = new SignatureCache()
+      delete client._session
+    })
+  }
 
   // This stores last 1024 inbound messages for report lookup
   client._lastChatHistory = new class extends Array {
@@ -225,10 +248,7 @@ module.exports = function (client, options) {
       })
 
       if (client._lastSeenMessages.push(packet.signature) && client._lastSeenMessages.pending > 64) {
-        client.write('message_acknowledgement', {
-          count: client._lastSeenMessages.pending
-        })
-        client._lastSeenMessages.pending = 0
+        sendChatAcknowledgement()
       }
       return
     }

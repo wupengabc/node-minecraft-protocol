@@ -5,6 +5,8 @@ const minecraft = require('./minecraft')
 module.exports = {
   Read: {
     varlong: ['native', minecraft.varlong[0]],
+    optionalVarInt: ['native', minecraft.optionalVarInt[0]],
+    clickActionNbt: ['native', minecraft.clickActionNbt[0]],
     UUID: ['native', (buffer, offset) => {
       return {
         value: UUID.stringify(buffer.slice(offset, 16 + offset)),
@@ -76,6 +78,8 @@ if (n !== 0) {
   },
   Write: {
     varlong: ['native', minecraft.varlong[1]],
+    optionalVarInt: ['native', minecraft.optionalVarInt[1]],
+    clickActionNbt: ['native', minecraft.clickActionNbt[1]],
     UUID: ['native', (value, buffer, offset) => {
       const buf = value.length === 32 ? Buffer.from(value, 'hex') : UUID.parse(value)
       buf.copy(buffer, offset)
@@ -143,6 +147,8 @@ return offset
   },
   SizeOf: {
     varlong: ['native', minecraft.varlong[2]],
+    optionalVarInt: ['native', minecraft.optionalVarInt[2]],
+    clickActionNbt: ['native', minecraft.clickActionNbt[2]],
     UUID: ['native', 16],
     restBuffer: ['native', (value) => {
       return value.length

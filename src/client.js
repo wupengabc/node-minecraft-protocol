@@ -37,7 +37,18 @@ class Client extends EventEmitter {
     this._socketEventHistory = []
     this._socketActivityCount = 0
     this._ending = false
+    this._outboundEnded = false
     this._mcBundle = []
+    // Always consume transform output immediately. Only final wire bytes wait
+    // for the socket, so codec/transport changes cannot reinterpret a backlog.
+    this.framer.on('data', (buffer) => {
+      if (this.cipher) this.cipher.write(buffer)
+      else this._queueWireBuffer(buffer)
+    })
+    this.framer.on('end', () => {
+      if (this.cipher) this.cipher.end()
+      else this._finishOutbound()
+    })
     const mcData = require('minecraft-data')(version)
     this._supportFeature = mcData.supportFeature
     this.protocolVersion = mcData.version.version
@@ -87,6 +98,12 @@ class Client extends EventEmitter {
 
   setSerializer (state) {
     this.serializer = createSerializer({ isServer: this.isServer, version: this.version, state, customPackets: this.customPackets })
+    const serializer = this.serializer
+    serializer.on('data', (buffer) => this._writePacketBuffer(buffer))
+    serializer.on('end', () => {
+      if (this.compressor) this.compressor.end()
+      else this.framer.end()
+    })
     this._mcBundle = []
     this._attachDeserializer(state)
 
@@ -135,18 +152,15 @@ class Client extends EventEmitter {
         parts.shift()
       } else { parts = [] }
       const serializerDirection = !this.isServer ? 'toServer' : 'toClient'
-      e.field = [this.protocolState, serializerDirection].concat(parts).join('.')
+      e.field = [state, serializerDirection].concat(parts).join('.')
       e.message = `Serialization error for ${e.field} : ${e.message}`
-      if (!this.compressor) { this.serializer.pipe(this.framer) } else { this.serializer.pipe(this.compressor) }
       this.emit('error', e)
     })
-    this.serializer.on('drain', () => this._drainWriteQueue())
   }
 
   // Creates the inbound parser for `state` and wires its handlers. Split out of
   // setSerializer so a destroyed parser can be replaced after a hard parse
-  // error without disturbing the outbound serializer (which owns the write
-  // queue and the framer pipe).
+  // error without disturbing the outbound codec or ordered wire-byte queue.
   _attachDeserializer (state) {
     this.deserializer = createDeserializer({
       isServer: this.isServer,
@@ -303,22 +317,7 @@ class Client extends EventEmitter {
     const oldProperty = this.protocolState
     this.protocolState = newProperty
 
-    if (oldProperty && oldProperty !== newProperty) {
-      // Packets queued for the old backend/state cannot be sent after a
-      // Velocity server switch. In particular, a queued movement packet would
-      // otherwise be serialized before configuration_acknowledged and stall
-      // the new backend's configuration handshake.
-      this._writeQueue.length = 0
-      this._priorityWriteQueue.length = 0
-      this._mcBundle = []
-    }
-
     if (this.serializer) {
-      if (!this.compressor) {
-        this.serializer.unpipe()
-      } else {
-        this.serializer.unpipe(this.compressor)
-      }
       this._deserializerSource.unpipe(this.deserializer)
 
       this.serializer.removeAllListeners()
@@ -326,12 +325,6 @@ class Client extends EventEmitter {
     }
     this.setSerializer(this.protocolState)
 
-    if (!this.compressor) {
-      this.serializer.pipe(this.framer)
-    } else {
-      this.serializer.pipe(this.compressor)
-      if (globalThis.debugNMP) this.decompressor.on('data', (data) => { console.log('DES>', data.toString('hex')) })
-    }
     this._deserializerSource.pipe(this.deserializer)
 
     this.emit('state', newProperty, oldProperty)
@@ -434,16 +427,14 @@ class Client extends EventEmitter {
     this.splitter.on('error', onError)
 
     this.socket.pipe(this.splitter)
-    this.framer.pipe(this.socket)
+    this._drainWriteQueue()
   }
 
   end (reason) {
     this._endReason = reason
     this._ending = true
-    this._writeQueue = []
-    this._priorityWriteQueue = []
-    /* ending the serializer will end the whole chain
-    serializer -> framer -> socket -> splitter -> deserializer */
+    // Finish the wire FIFO before ending the socket, including a final
+    // disconnect packet written immediately before end().
     if (this.serializer) {
       this.serializer.end()
     } else {
@@ -461,8 +452,8 @@ class Client extends EventEmitter {
     if (this.cipher != null) { this.emit('error', new Error('Set encryption twice!')) }
     this.cipher = createCipher(sharedSecret)
     this.cipher.on('error', (err) => this.emit('error', err))
-    this.framer.unpipe(this.socket)
-    this.framer.pipe(this.cipher).pipe(this.socket)
+    this.cipher.on('data', (buffer) => this._queueWireBuffer(buffer))
+    this.cipher.on('end', () => this._finishOutbound())
     this.decipher = createDecipher(sharedSecret)
     this.decipher.on('error', (err) => this.emit('error', err))
     this.socket.unpipe(this.splitter)
@@ -473,15 +464,15 @@ class Client extends EventEmitter {
     if (this.compressor == null) {
       this.compressor = compression.createCompressor(threshold)
       this.compressor.on('error', (err) => this.emit('error', err))
-      this.serializer.unpipe(this.framer)
-      this.serializer.pipe(this.compressor).pipe(this.framer)
+      this.compressor.on('data', (buffer) => this.framer.write(buffer))
+      this.compressor.on('end', () => this.framer.end())
       this.decompressor = compression.createDecompressor(threshold, this.hideErrors)
       this.decompressor.on('error', (err) => this.emit('error', err))
       this.splitter.unpipe(this.deserializer)
       this.splitter.pipe(this.decompressor).pipe(this.deserializer)
     } else {
-      this.decompressor.threshold = threshold
-      this.compressor.threshold = threshold
+      this.decompressor.compressionThreshold = threshold
+      this.compressor.compressionThreshold = threshold
     }
   }
 
@@ -495,8 +486,7 @@ class Client extends EventEmitter {
   }
 
   get writeBackpressured () {
-    return this._writeQueue.length > 0 || !!this.serializer?.writableNeedDrain ||
-      !!this.socket?.writableNeedDrain || this.framer.readableLength >= this.framer.readableHighWaterMark
+    return this._writeQueue.length > 0 || !!this.socket?.writableNeedDrain
   }
 
   _queueWrite (name, params) {
@@ -508,22 +498,57 @@ class Client extends EventEmitter {
       debug(params)
     }
 
-    this._writeQueue.push({ name, params })
+    // Encode now rather than buffering named packets in a replaceable codec.
+    // The transport transforms are synchronous and always consumed, so the
+    // only backlog consists of final wire bytes.
+    let buffer
+    try {
+      buffer = this.serializer.createPacketBuffer({ name, params })
+    } catch (err) {
+      // An error listener may try to send a disconnect packet. If that packet
+      // is malformed too, do not recursively emit serialization errors.
+      if (!this._serializationError) {
+        this._serializationError = true
+        try {
+          this.serializer.emit('error', err)
+        } finally {
+          this._serializationError = false
+        }
+      }
+      return
+    }
+    if (name === 'keep_alive') this._lastKeepAliveWriteAt = Date.now()
+    this._writePacketBuffer(buffer)
+  }
+
+  _writePacketBuffer (buffer) {
+    if (this.compressor) this.compressor.write(buffer)
+    else this.framer.write(buffer)
+  }
+
+  _queueWireBuffer (buffer) {
+    this._writeQueue.push(buffer)
+    this._drainWriteQueue()
+  }
+
+  _finishOutbound () {
+    this._outboundEnded = true
     this._drainWriteQueue()
   }
 
   _drainWriteQueue () {
-    if (this._drainingWrites || this.ended || !this.serializer?.writable) return
+    if (this._drainingWrites || this.ended || !this.socket?.writable) return
     this._drainingWrites = true
-
-    while (this._writeQueue.length) {
-      if (this.serializer.writableNeedDrain || this.socket?.writableNeedDrain || this.framer.readableLength >= this.framer.readableHighWaterMark) break
-      const packet = this._writeQueue.shift()
-      if (packet.name === 'keep_alive') this._lastKeepAliveWriteAt = Date.now()
-      if (!this.serializer.write(packet)) break
+    try {
+      while (this._writeQueue.length && !this.socket.writableNeedDrain) {
+        // A false return still accepts this buffer. Resume with the next one
+        // on drain; replaying this one would corrupt framing/encryption.
+        if (!this.socket.write(this._writeQueue.shift())) break
+      }
+      if (this._outboundEnded && !this._writeQueue.length) this.socket.end()
+    } finally {
+      this._drainingWrites = false
     }
-
-    this._drainingWrites = false
   }
 
   writeBundle (packets) {
@@ -535,7 +560,7 @@ class Client extends EventEmitter {
   writeRaw (buffer) {
     const stream = this.compressor === null ? this.framer : this.compressor
     if (!stream.writable) { return }
-    stream.write(buffer)
+    this._writePacketBuffer(buffer)
   }
 
   // TCP/IP-specific (not generic Stream) method for backwards-compatibility

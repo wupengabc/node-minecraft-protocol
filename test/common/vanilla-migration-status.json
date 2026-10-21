@@ -1,0 +1,86 @@
+{
+  "versions": {
+    "26.2": {
+      "protocolJavaFiles": 293,
+      "registeredPackets": 256,
+      "serverboundRegistrations": 87,
+      "serverboundSourceFilesReviewed": 75,
+      "playClientboundRegistrations": 141,
+      "itemComponentRegistrations": 111
+    },
+    "26.3": {
+      "protocolJavaFiles": 298,
+      "registeredPackets": 260,
+      "serverboundRegistrations": 87,
+      "serverboundSourceFilesReviewed": 75,
+      "playClientboundRegistrations": 144,
+      "itemComponentRegistrations": 122
+    }
+  },
+  "completeVanillaClientPort": false,
+  "registrationInventories": [
+    "vanilla-packets-26.2.json",
+    "vanilla-packets-26.3.json"
+  ],
+  "registrationCoverageMeaning": "All vanilla state/direction/ID registrations have schemas. This does not certify recursive codec correctness or client behavior.",
+  "implementedAreas": [
+    "Write-time state codec selection and final-wire FIFO including encryption/compression transitions",
+    "Player tick reporting, relative player rotation, interaction sequences and versioned action ordinals",
+    "Forced aim reports rotation before subsequent actions when the world and player are ready, preserving the position reminder",
+    "Entity teleport, relative movement, position sync endpoints, passengers, leash and animation handling",
+    "Cookies, conditional session authentication, configuration brand/settings/pong and chat signing lifecycle",
+    "Split registry accumulation, raw registry/tag retention and resource-pack response decisions",
+    "VarLong, optional VarInt and bounded length-prefixed custom click NBT",
+    "Attribute/particle registry IDs and focused particle, spawn info, advancement, sign, minecart and optional written-book page layouts",
+    "All thirteen newly registered 26.3 component payloads and focused shared nested stack-template fixes",
+    "Creative untrusted component body encoding using the active protocol codec",
+    "Hashed inventory stacks for a documented subset of persistent component codecs, with atomic preflight",
+    "Cached chunk biome updates using the chunk dependency palette reader"
+  ],
+  "persistentComponentHashSupport": {
+    "scalar": [
+      "max_stack_size", "max_damage", "damage", "repair_cost", "map_id", "ominous_bottle_amplifier",
+      "minimum_attack_charge", "potion_duration_scale", "enchantment_glint_override", "rarity", "dyed_color", "map_color"
+    ],
+    "unit": ["unbreakable", "intangible_projectile", "glider", "waxed"],
+    "identifier": ["item_model", "tooltip_style", "note_block_sound"],
+    "dyeColorEnum": ["dye", "base_color", "wolf/collar", "cat/collar", "sheep/color", "shulker/color", "cushion/color", "tropical_fish/base_color", "tropical_fish/pattern_color"],
+    "receivedRegistryRequired": ["enchantments", "stored_enchantments", "provides_pottery_pattern"],
+    "typedCompoundNbt": ["custom_data", "bucket_entity_data"],
+    "textComponents": {
+      "components": ["custom_name", "item_name", "lore"],
+      "content": ["literal string and compound literal with vanilla collapse", "translation with primitive or supported component arguments and optional fallback", "keybind", "nonempty component lists and extra siblings"],
+      "style": ["explicit boolean flags including false", "named or hexadecimal text color", "integer shadow color", "insertion", "resource font identifier"],
+      "unsupported": ["click and hover events", "score, selector, NBT and object contents", "non-integer shadow color representations"]
+    },
+    "structured": ["enchantable", "use_effects", "food", "weapon", "use_cooldown", "tooltip_display", "block_state", "swing_animation", "attack_animation", "interact_animation", "villager_food", "custom_model_data", "attack_range", "writable_book_content", "written_book_content using the supported text subset", "compostable", "cooking_fuel", "brewing_fuel", "firework_explosion", "fireworks"],
+    "nestedTemplates": ["use_remainder", "sulfur_cube_content", "charged_projectiles", "bundle_contents", "container"],
+    "unsupportedBehavior": "Throws before sending a click or applying local slot prediction. No placeholder hash is sent."
+  },
+  "verificationEntryPoints": {
+    "registrationAndFullSourceSnapshots": "test/packet_inventory.test.js",
+    "independentWireFields": "test/vanilla_fields.test.js",
+    "clientLifecycle": "test/client_lifecycle.test.js",
+    "chatLifecycleAndStalledTransport": "test/chat_lifecycle.test.js",
+    "installedSourceAndDependencyIdentity": "test/common/verify-runtime.js",
+    "componentsAndCreative": "../mineflayer/test/component_codec_parity.test.js",
+    "persistentComponentHashesAndClicks": "../mineflayer/test/item_hash.test.js",
+    "entityBehavior": "../mineflayer/test/incoming_entity_parity.test.js",
+    "registriesAndResourcePacks": "../mineflayer/test/configuration_resources.test.js",
+    "chunkBiomes": "../mineflayer/test/chunk_biomes.test.js",
+    "biomePaletteReader": "../prismarine-chunk/test/biomePackets.test.js"
+  },
+  "remainingWork": [
+    "Audit all pre-existing component payloads recursively, including registry holders and delegated codecs",
+    "Implement persistent component hashes for every registered component and rich text representation",
+    "Audit recipes, command arguments, metadata, dialogs/debug payloads and all nested bounds",
+    "Complete missing high-level client packet behavior and APIs; registration is not handler coverage",
+    "Resolve omitted registry values through an explicit local known-pack resolver",
+    "Implement resource-pack download, verification and apply lifecycle; explicit accept retains the historical completion assertion",
+    "Implement explicit transfer reconnection using the emitted cookie snapshot",
+    "Complete item defaults, attack-charge rules, vehicle simulation and remaining movement eligibility conditions",
+    "Complete an independent review interrupted by an account balance error",
+    "Validate against a real server and ACE evidence; local tests do not establish anticheat acceptance"
+  ],
+  "publication": "Release targets: @wp2508/minecraft-data 3.111.7, @wp2508/minecraft-protocol 1.69.4, @wp2508/prismarine-chunk 1.41.4 and @wp2508/mineflayer 4.42.5. Package publication does not establish a complete vanilla client port, remote deployment or anticheat acceptance."
+}

@@ -8,6 +8,10 @@ const [readLpVec3, writeLpVec3, sizeOfLpVec3] = require('./lpVec3')
 
 module.exports = {
   varlong: [readVarLong, writeVarLong, sizeOfVarLong],
+  optionalVarInt: [readOptionalVarInt, writeOptionalVarInt, sizeOfOptionalVarInt],
+  clickActionNbt: [readClickActionNbt, writeClickActionNbt, sizeOfClickActionNbt],
+  registryEntryHolder: [readRegistryEntryHolder, writeRegistryEntryHolder, sizeOfRegistryEntryHolder],
+  registryEntryHolderSet: [readRegistryEntryHolderSet, writeRegistryEntryHolderSet, sizeOfRegistryEntryHolderSet],
   UUID: [readUUID, writeUUID, 16],
   compressedNbt: [readCompressedNbt, writeCompressedNbt, sizeOfCompressedNbt],
   restBuffer: [readRestBuffer, writeRestBuffer, sizeOfRestBuffer],
@@ -28,8 +32,8 @@ module.exports = {
 // Deltas are scaled by VecDeltaCodec's 4096 (encode = round(v * 4096)). The
 // step count gates the payload length, so this cannot be expressed with
 // protodef switch/array types and is implemented natively. The value exposes
-// `onGround`, the final-step delta in blocks as x/y/z (matching the old dX-style
-// flat fields), and the full `steps` list.
+// `onGround`, the accumulated delta in blocks as dX/dY/dZ, and the full `steps`
+// list. VecDelta.Stepped.decode updates its base after each step.
 const VEC_DELTA_SCALE = 4096
 
 function readVecDelta (buffer, offset) {
@@ -68,7 +72,7 @@ function readVecDelta (buffer, offset) {
       const sy = buffer.readInt16BE(offset); offset += 2
       const sz = buffer.readInt16BE(offset); offset += 2
       steps.push({ ticks, x: sx / VEC_DELTA_SCALE, y: sy / VEC_DELTA_SCALE, z: sz / VEC_DELTA_SCALE })
-      xa = sx; ya = sy; za = sz
+      xa += sx; ya += sy; za += sz
     }
   } else {
     if (offset + 6 > buffer.length) throw new PartialReadError('vecDelta: unexpected end reading linear delta')
@@ -121,16 +125,111 @@ function sizeOfVecDelta (value) {
 }
 const PartialReadError = require('protodef').utils.PartialReadError
 
+function readRegistryEntryHolder (buffer, offset, opts) {
+  const id = readVarInt(buffer, offset)
+  if (id.value !== 0) return { value: { [opts.baseName]: id.value - 1 }, size: id.size }
+  const data = this.read(buffer, offset + id.size, opts.otherwise.type, {})
+  return { value: { [opts.otherwise.name]: data.value }, size: id.size + data.size }
+}
+
+function writeRegistryEntryHolder (value, buffer, offset, opts) {
+  if (value[opts.baseName] != null) return writeVarInt(value[opts.baseName] + 1, buffer, offset)
+  if (value[opts.otherwise.name] == null) throw new Error('Registry holder requires an ID or inline value')
+  offset = writeVarInt(0, buffer, offset)
+  return this.write(value[opts.otherwise.name], buffer, offset, opts.otherwise.type, {})
+}
+
+function sizeOfRegistryEntryHolder (value, opts) {
+  if (value[opts.baseName] != null) return sizeOfVarInt(value[opts.baseName] + 1)
+  if (value[opts.otherwise.name] == null) throw new Error('Registry holder requires an ID or inline value')
+  return 1 + this.sizeOf(value[opts.otherwise.name], opts.otherwise.type, {})
+}
+
+function readRegistryEntryHolderSet (buffer, offset, opts) {
+  const count = readVarInt(buffer, offset)
+  if (count.value === 0) {
+    const tag = this.read(buffer, offset + count.size, opts.base.type, {})
+    return { value: { [opts.base.name]: tag.value }, size: count.size + tag.size }
+  }
+  if (count.value < 0) throw new RangeError('Invalid registry holder set size')
+  const values = []
+  let size = count.size
+  for (let i = 0; i < count.value - 1; i++) {
+    const entry = this.read(buffer, offset + size, opts.otherwise.type, {})
+    values.push(entry.value)
+    size += entry.size
+  }
+  return { value: { [opts.otherwise.name]: values }, size }
+}
+
+function writeRegistryEntryHolderSet (value, buffer, offset, opts) {
+  if (value[opts.base.name] != null) {
+    offset = writeVarInt(0, buffer, offset)
+    return this.write(value[opts.base.name], buffer, offset, opts.base.type, {})
+  }
+  const values = value[opts.otherwise.name]
+  if (!Array.isArray(values)) throw new Error('Registry holder set requires a tag or ID list')
+  offset = writeVarInt(values.length + 1, buffer, offset)
+  for (const entry of values) offset = this.write(entry, buffer, offset, opts.otherwise.type, {})
+  return offset
+}
+
+function sizeOfRegistryEntryHolderSet (value, opts) {
+  if (value[opts.base.name] != null) return 1 + this.sizeOf(value[opts.base.name], opts.base.type, {})
+  const values = value[opts.otherwise.name]
+  if (!Array.isArray(values)) throw new Error('Registry holder set requires a tag or ID list')
+  return sizeOfVarInt(values.length + 1) + values.reduce((size, entry) => size + this.sizeOf(entry, opts.otherwise.type, {}), 0)
+}
+
 function readVarLong (buffer, offset) {
-  return readVarInt(buffer, offset)
+  let value = 0n
+  for (let size = 0; size < 10; size++) {
+    if (offset + size >= buffer.length) throw new PartialReadError()
+    const byte = buffer[offset + size]
+    value |= BigInt(byte & 0x7f) << BigInt(size * 7)
+    if (!(byte & 0x80)) {
+      const signed = BigInt.asIntN(64, value)
+      const number = Number(signed)
+      return { value: Number.isSafeInteger(number) ? number : signed, size: size + 1 }
+    }
+  }
+  throw new Error('VarLong is too large')
 }
 
 function writeVarLong (value, buffer, offset) {
-  return writeVarInt(value, buffer, offset)
+  if (typeof value === 'number' && !Number.isSafeInteger(value)) throw new RangeError('VarLong requires a safe integer or bigint')
+  let remaining = BigInt.asUintN(64, BigInt(value))
+  do {
+    const byte = Number(remaining & 0x7fn)
+    remaining >>= 7n
+    buffer[offset++] = byte | (remaining ? 0x80 : 0)
+  } while (remaining)
+  return offset
 }
 
 function sizeOfVarLong (value) {
-  return sizeOfVarInt(value)
+  if (typeof value === 'number' && !Number.isSafeInteger(value)) throw new RangeError('VarLong requires a safe integer or bigint')
+  let remaining = BigInt.asUintN(64, BigInt(value))
+  let size = 1
+  while (remaining >= 0x80n) {
+    remaining >>= 7n
+    size++
+  }
+  return size
+}
+
+function readOptionalVarInt (buffer, offset) {
+  const result = readVarInt(buffer, offset)
+  result.value = result.value === 0 ? undefined : result.value - 1
+  return result
+}
+
+function writeOptionalVarInt (value, buffer, offset) {
+  return writeVarInt(value == null ? 0 : value + 1, buffer, offset)
+}
+
+function sizeOfOptionalVarInt (value) {
+  return sizeOfVarInt(value == null ? 0 : value + 1)
 }
 
 function readUUID (buffer, offset) {
@@ -149,6 +248,32 @@ function writeUUID (value, buffer, offset) {
 
 function sizeOfNbt (value, { tagType } = { tagType: 'nbt' }) {
   return nbt.proto.sizeOf(value, tagType)
+}
+
+// ServerboundCustomClickActionPacket bounds an optional anonymous tag inside
+// a byte-length-prefixed buffer, rather than a boolean-prefixed option.
+function readClickActionNbt (buffer, offset) {
+  const length = readVarInt(buffer, offset)
+  if (length.value < 0 || length.value > 65536) throw new RangeError('Click action NBT exceeds 65536 bytes')
+  const start = offset + length.size
+  const end = start + length.value
+  if (end > buffer.length) throw new PartialReadError()
+  const tag = nbt.proto.read(buffer.subarray(start, end), 0, 'anonOptionalNbt')
+  if (tag.size !== length.value) throw new Error('Click action NBT has trailing bytes')
+  return { value: tag.value, size: length.size + length.value }
+}
+
+function writeClickActionNbt (value, buffer, offset) {
+  const size = nbt.proto.sizeOf(value, 'anonOptionalNbt')
+  if (size > 65536) throw new RangeError('Click action NBT exceeds 65536 bytes')
+  offset = writeVarInt(size, buffer, offset)
+  return nbt.proto.write(value, buffer, offset, 'anonOptionalNbt')
+}
+
+function sizeOfClickActionNbt (value) {
+  const size = nbt.proto.sizeOf(value, 'anonOptionalNbt')
+  if (size > 65536) throw new RangeError('Click action NBT exceeds 65536 bytes')
+  return sizeOfVarInt(size) + size
 }
 
 // Length-prefixed compressed NBT, see differences: http://wiki.vg/index.php?title=Slot_Data&diff=6056&oldid=4753

@@ -1,0 +1,3685 @@
+{
+  "sourceFileCount": 298,
+  "packetSourceCount": 229,
+  "states": [
+    {
+      "state": "handshaking",
+      "direction": "toServer",
+      "vanillaCount": 1,
+      "schemaCount": 2
+    },
+    {
+      "state": "status",
+      "direction": "toServer",
+      "vanillaCount": 2,
+      "schemaCount": 2
+    },
+    {
+      "state": "status",
+      "direction": "toClient",
+      "vanillaCount": 2,
+      "schemaCount": 2
+    },
+    {
+      "state": "login",
+      "direction": "toServer",
+      "vanillaCount": 5,
+      "schemaCount": 5
+    },
+    {
+      "state": "login",
+      "direction": "toClient",
+      "vanillaCount": 6,
+      "schemaCount": 6
+    },
+    {
+      "state": "configuration",
+      "direction": "toServer",
+      "vanillaCount": 10,
+      "schemaCount": 10
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "vanillaCount": 21,
+      "schemaCount": 21
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "vanillaCount": 69,
+      "schemaCount": 69
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "vanillaCount": 144,
+      "schemaCount": 144
+    }
+  ],
+  "packets": [
+    {
+      "state": "handshaking",
+      "direction": "toServer",
+      "id": 0,
+      "identifier": "intention",
+      "class": "ClientIntentionPacket",
+      "schemaName": "set_protocol",
+      "schemaType": "packet_set_protocol",
+      "source": "handshake/ClientIntentionPacket.java",
+      "sourceSha256": "acf9b0e6c238120b09ddedc88f88f12db1010cb24263deeb630e5c93258494ba",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "status",
+      "direction": "toServer",
+      "id": 0,
+      "identifier": "status_request",
+      "class": "ServerboundStatusRequestPacket",
+      "schemaName": "ping_start",
+      "schemaType": "packet_ping_start",
+      "source": "status/ServerboundStatusRequestPacket.java",
+      "sourceSha256": "d33299505688a9f39a971bc9df8ecb1d8ed3507813ac4d63adccb7f207e35ff4",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "status",
+      "direction": "toServer",
+      "id": 1,
+      "identifier": "ping_request",
+      "class": "ServerboundPingRequestPacket",
+      "schemaName": "ping",
+      "schemaType": "packet_ping",
+      "source": "ping/ServerboundPingRequestPacket.java",
+      "sourceSha256": "b28cb10d99766e41c0add2e1356d0db74e71098b2248c59a38472126e68f9448",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/game.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "status",
+      "direction": "toClient",
+      "id": 0,
+      "identifier": "status_response",
+      "class": "ClientboundStatusResponsePacket",
+      "schemaName": "server_info",
+      "schemaType": "packet_server_info",
+      "source": "status/ClientboundStatusResponsePacket.java",
+      "sourceSha256": "57b48ecf3b31ee16c0e75a046d97ede3add9039677673f78ff06dbb61afc3fb5",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "status",
+      "direction": "toClient",
+      "id": 1,
+      "identifier": "pong_response",
+      "class": "ClientboundPongResponsePacket",
+      "schemaName": "ping",
+      "schemaType": "packet_ping",
+      "source": "ping/ClientboundPongResponsePacket.java",
+      "sourceSha256": "72bf4fd6f6c5fa119f02345bd55a7207fdef8bac48ea127a04ffaba05ded07bf",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/game.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "login",
+      "direction": "toServer",
+      "id": 0,
+      "identifier": "hello",
+      "class": "ServerboundHelloPacket",
+      "schemaName": "login_start",
+      "schemaType": "packet_login_start",
+      "source": "login/ServerboundHelloPacket.java",
+      "sourceSha256": "f8d876c8a59234256187838ace696e297145cfc0385748af6e521ae789f01337",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "login",
+      "direction": "toServer",
+      "id": 1,
+      "identifier": "key",
+      "class": "ServerboundKeyPacket",
+      "schemaName": "encryption_begin",
+      "schemaType": "packet_encryption_begin",
+      "source": "login/ServerboundKeyPacket.java",
+      "sourceSha256": "62007ae8c0d191dcc5bf88e85224bb0c8f8d5c4ca0525f33afb8d33b064f3253",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/encrypt.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "login",
+      "direction": "toServer",
+      "id": 2,
+      "identifier": "custom_query_answer",
+      "class": "ServerboundCustomQueryAnswerPacket",
+      "schemaName": "login_plugin_response",
+      "schemaType": "packet_login_plugin_response",
+      "source": "login/ServerboundCustomQueryAnswerPacket.java",
+      "sourceSha256": "0ad46654e248e62726ad717ee8a34ac38bd703934c8d60061eb39b65ccc05e38",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "login",
+      "direction": "toServer",
+      "id": 3,
+      "identifier": "login_acknowledged",
+      "class": "ServerboundLoginAcknowledgedPacket",
+      "schemaName": "login_acknowledged",
+      "schemaType": "packet_login_acknowledged",
+      "source": "login/ServerboundLoginAcknowledgedPacket.java",
+      "sourceSha256": "7821ad0ecdc9a11f58016e9f145669b4fa4324ee1b34889a09acd70e1151e920",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "login",
+      "direction": "toServer",
+      "id": 4,
+      "identifier": "cookie_response",
+      "class": "ServerboundCookieResponsePacket",
+      "schemaName": "cookie_response",
+      "schemaType": "packet_common_cookie_response",
+      "source": "cookie/ServerboundCookieResponsePacket.java",
+      "sourceSha256": "3a246a968797d36cfb64af9555bc3c58b157f0f6c8d30b4760f24846816289df",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "login",
+      "direction": "toClient",
+      "id": 0,
+      "identifier": "login_disconnect",
+      "class": "ClientboundLoginDisconnectPacket",
+      "schemaName": "disconnect",
+      "schemaType": "packet_disconnect",
+      "source": "login/ClientboundLoginDisconnectPacket.java",
+      "sourceSha256": "1f8ef99fd785ac76db591879bdb2ed4efab4d518ada95a508061785600a0f456",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/versionChecking.js",
+        "mineflayer/lib/plugins/kick.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "login",
+      "direction": "toClient",
+      "id": 1,
+      "identifier": "hello",
+      "class": "ClientboundHelloPacket",
+      "schemaName": "encryption_begin",
+      "schemaType": "packet_encryption_begin",
+      "source": "login/ClientboundHelloPacket.java",
+      "sourceSha256": "ebaf3ab64d0932c3d09576bffc2f50bfdd29ae203f5da98853e81675b8736914",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/encrypt.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "login",
+      "direction": "toClient",
+      "id": 2,
+      "identifier": "login_finished",
+      "class": "ClientboundLoginFinishedPacket",
+      "schemaName": "success",
+      "schemaType": "packet_success",
+      "source": "login/ClientboundLoginFinishedPacket.java",
+      "sourceSha256": "c37147f2ae0231954d430e4874c43949a52fa6eccc6ce197567b5de3398c39ca",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/play.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "login",
+      "direction": "toClient",
+      "id": 3,
+      "identifier": "login_compression",
+      "class": "ClientboundLoginCompressionPacket",
+      "schemaName": "compress",
+      "schemaType": "packet_compress",
+      "source": "login/ClientboundLoginCompressionPacket.java",
+      "sourceSha256": "67dd4c4d7d73145d0afcefb3215e1aee7c29c27af2d991cc4fd30b29b864e710",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/compress.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "login",
+      "direction": "toClient",
+      "id": 4,
+      "identifier": "custom_query",
+      "class": "ClientboundCustomQueryPacket",
+      "schemaName": "login_plugin_request",
+      "schemaType": "packet_login_plugin_request",
+      "source": "login/ClientboundCustomQueryPacket.java",
+      "sourceSha256": "6902e04e6f828fd5e31bf5bcdc2f70f6f87709ca8ae118342f6befdbe6b32258",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/pluginChannels.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "login",
+      "direction": "toClient",
+      "id": 5,
+      "identifier": "cookie_request",
+      "class": "ClientboundCookieRequestPacket",
+      "schemaName": "cookie_request",
+      "schemaType": "packet_common_cookie_request",
+      "source": "cookie/ClientboundCookieRequestPacket.java",
+      "sourceSha256": "8a96fcf1788c13c13b163f869ed8167e45cdd19d569ff025eb344f745bc62f59",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toServer",
+      "id": 0,
+      "identifier": "client_information",
+      "class": "ServerboundClientInformationPacket",
+      "schemaName": "settings",
+      "schemaType": "packet_common_settings",
+      "source": "common/ServerboundClientInformationPacket.java",
+      "sourceSha256": "27520dae10e6972e8e65439ea62d7c0941ac47ea16aec382a33f98128992527d",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toServer",
+      "id": 1,
+      "identifier": "cookie_response",
+      "class": "ServerboundCookieResponsePacket",
+      "schemaName": "cookie_response",
+      "schemaType": "packet_common_cookie_response",
+      "source": "cookie/ServerboundCookieResponsePacket.java",
+      "sourceSha256": "3a246a968797d36cfb64af9555bc3c58b157f0f6c8d30b4760f24846816289df",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toServer",
+      "id": 2,
+      "identifier": "custom_payload",
+      "class": "ServerboundCustomPayloadPacket",
+      "schemaName": "custom_payload",
+      "schemaType": "packet_custom_payload",
+      "source": "common/ServerboundCustomPayloadPacket.java",
+      "sourceSha256": "a78c9f1345fe588d58ceea93760c9751c9c4861e240a272f8f4ef3bc9c449987",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/pluginChannels.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toServer",
+      "id": 3,
+      "identifier": "finish_configuration",
+      "class": "ServerboundFinishConfigurationPacket",
+      "schemaName": "finish_configuration",
+      "schemaType": "packet_finish_configuration",
+      "source": "configuration/ServerboundFinishConfigurationPacket.java",
+      "sourceSha256": "14859f59118a1978bdf662deb95379abe69371e4c528178009a7244a2ead4772",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/play.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toServer",
+      "id": 4,
+      "identifier": "keep_alive",
+      "class": "ServerboundKeepAlivePacket",
+      "schemaName": "keep_alive",
+      "schemaType": "packet_keep_alive",
+      "source": "common/ServerboundKeepAlivePacket.java",
+      "sourceSha256": "f691c69e450193fd3f719d2c3a910c086830f9f114e62b1b45b8ea959ed5e187",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/keepalive.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toServer",
+      "id": 5,
+      "identifier": "pong",
+      "class": "ServerboundPongPacket",
+      "schemaName": "pong",
+      "schemaType": "packet_pong",
+      "source": "common/ServerboundPongPacket.java",
+      "sourceSha256": "3e5b42edb5311d4c7c233cc874003d785978648639c06a32a63e3d483d780307",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toServer",
+      "id": 6,
+      "identifier": "resource_pack",
+      "class": "ServerboundResourcePackPacket",
+      "schemaName": "resource_pack_receive",
+      "schemaType": "packet_resource_pack_receive",
+      "source": "common/ServerboundResourcePackPacket.java",
+      "sourceSha256": "da6d78bb946f1ae9963cca0cb5f0f354d3ee9277ee2b55350c75178aac357a88",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toServer",
+      "id": 7,
+      "identifier": "select_known_packs",
+      "class": "ServerboundSelectKnownPacks",
+      "schemaName": "select_known_packs",
+      "schemaType": "packet_common_select_known_packs",
+      "source": "configuration/ServerboundSelectKnownPacks.java",
+      "sourceSha256": "b36cfdcf5b063c0a3b518d01490586d4e8d3b1804bc3d997729810c861a33a8e",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/play.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toServer",
+      "id": 8,
+      "identifier": "custom_click_action",
+      "class": "ServerboundCustomClickActionPacket",
+      "schemaName": "custom_click_action",
+      "schemaType": "packet_common_custom_click_action",
+      "source": "common/ServerboundCustomClickActionPacket.java",
+      "sourceSha256": "009ea5989fc4ecd56cafc85b52508d76ec6ec98867f95b60f81bc418a8c28404",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toServer",
+      "id": 9,
+      "identifier": "accept_code_of_conduct",
+      "class": "ServerboundAcceptCodeOfConductPacket",
+      "schemaName": "accept_code_of_conduct",
+      "schemaType": "packet_accept_code_of_conduct",
+      "source": "configuration/ServerboundAcceptCodeOfConductPacket.java",
+      "sourceSha256": "0b4d1c3bcfa167d98ffde5b8c181fa7573e365d1f3e1d794230ebc6ad7fd6047",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 0,
+      "identifier": "cookie_request",
+      "class": "ClientboundCookieRequestPacket",
+      "schemaName": "cookie_request",
+      "schemaType": "packet_common_cookie_request",
+      "source": "cookie/ClientboundCookieRequestPacket.java",
+      "sourceSha256": "8a96fcf1788c13c13b163f869ed8167e45cdd19d569ff025eb344f745bc62f59",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 1,
+      "identifier": "custom_payload",
+      "class": "ClientboundCustomPayloadPacket",
+      "schemaName": "custom_payload",
+      "schemaType": "packet_custom_payload",
+      "source": "common/ClientboundCustomPayloadPacket.java",
+      "sourceSha256": "5467a4e32511e6dc28088e63d70b230dc5ad719657b493b0d8241f8c53051c3d",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/pluginChannels.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 2,
+      "identifier": "disconnect",
+      "class": "ClientboundDisconnectPacket",
+      "schemaName": "disconnect",
+      "schemaType": "packet_disconnect",
+      "source": "common/ClientboundDisconnectPacket.java",
+      "sourceSha256": "206a9f0864454b96f2a1d764a35712bc618c553475d9c48634662ca6bc6e5192",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/versionChecking.js",
+        "mineflayer/lib/plugins/kick.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 3,
+      "identifier": "finish_configuration",
+      "class": "ClientboundFinishConfigurationPacket",
+      "schemaName": "finish_configuration",
+      "schemaType": "packet_finish_configuration",
+      "source": "configuration/ClientboundFinishConfigurationPacket.java",
+      "sourceSha256": "2ce39ffd862455fe6f747aff99f5841ea77c7f697446207c396b15eefcc43640",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/play.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 4,
+      "identifier": "keep_alive",
+      "class": "ClientboundKeepAlivePacket",
+      "schemaName": "keep_alive",
+      "schemaType": "packet_keep_alive",
+      "source": "common/ClientboundKeepAlivePacket.java",
+      "sourceSha256": "445724c20f011ad6faaf9b20d23e098fc38b8d53b825931ef66137d7ff86fd8a",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/keepalive.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 5,
+      "identifier": "ping",
+      "class": "ClientboundPingPacket",
+      "schemaName": "ping",
+      "schemaType": "packet_ping",
+      "source": "common/ClientboundPingPacket.java",
+      "sourceSha256": "11c85e0d25d8d33b046fca6c1dd3039c8bb1ea9b720f667eb284017b9b7c6740",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/game.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 6,
+      "identifier": "reset_chat",
+      "class": "ClientboundResetChatPacket",
+      "schemaName": "reset_chat",
+      "schemaType": "packet_reset_chat",
+      "source": "configuration/ClientboundResetChatPacket.java",
+      "sourceSha256": "6cd3ddac1ce68cc6ffc78c8a9e61f252cc2ff5f1533aa29462e1166e077f558a",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 7,
+      "identifier": "registry_data",
+      "class": "ClientboundRegistryDataPacket",
+      "schemaName": "registry_data",
+      "schemaType": "packet_registry_data",
+      "source": "configuration/ClientboundRegistryDataPacket.java",
+      "sourceSha256": "33179d4f96049fe6c43c8db95ca15bba8fd7b1fc2d689684bd8abcee5a225bd8",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/game.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 8,
+      "identifier": "resource_pack_pop",
+      "class": "ClientboundResourcePackPopPacket",
+      "schemaName": "remove_resource_pack",
+      "schemaType": "packet_common_remove_resource_pack",
+      "source": "common/ClientboundResourcePackPopPacket.java",
+      "sourceSha256": "b16f9e789f4ecb1c260f895d754ae5d71ec59db3460dd9150887eea0434e9e02",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/resource_pack.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 9,
+      "identifier": "resource_pack_push",
+      "class": "ClientboundResourcePackPushPacket",
+      "schemaName": "add_resource_pack",
+      "schemaType": "packet_common_add_resource_pack",
+      "source": "common/ClientboundResourcePackPushPacket.java",
+      "sourceSha256": "56bb041f58098e1e2a8f90c14b4f00e9b358dfa9befc6b613b1589b3fcea6653",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/resource_pack.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 10,
+      "identifier": "post_effects",
+      "class": "ClientboundPostEffectsPacket",
+      "schemaName": "post_effects",
+      "schemaType": "packet_common_post_effects",
+      "source": "common/ClientboundPostEffectsPacket.java",
+      "sourceSha256": "9054f1a1b309ca20cec41f8fa33eed46ce3925295b2efa4d2429ebd625c007d1",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 11,
+      "identifier": "store_cookie",
+      "class": "ClientboundStoreCookiePacket",
+      "schemaName": "store_cookie",
+      "schemaType": "packet_common_store_cookie",
+      "source": "common/ClientboundStoreCookiePacket.java",
+      "sourceSha256": "56bbb41c04be170fd9a2a9b8ac666b1bbf1e810332675a4976ba177d7db6ac06",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 12,
+      "identifier": "transfer",
+      "class": "ClientboundTransferPacket",
+      "schemaName": "transfer",
+      "schemaType": "packet_common_transfer",
+      "source": "common/ClientboundTransferPacket.java",
+      "sourceSha256": "4432f39bec630ea047ab077e9c8bd8d9fd67ed5c8209f740fa2ff0ff245419dc",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 13,
+      "identifier": "update_enabled_features",
+      "class": "ClientboundUpdateEnabledFeaturesPacket",
+      "schemaName": "feature_flags",
+      "schemaType": "packet_feature_flags",
+      "source": "configuration/ClientboundUpdateEnabledFeaturesPacket.java",
+      "sourceSha256": "c9ab5bfbc37b564fc8d3db65717329d670f9bf10309e456a21fabd54eb658f60",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 14,
+      "identifier": "update_tags",
+      "class": "ClientboundUpdateTagsPacket",
+      "schemaName": "tags",
+      "schemaType": "packet_tags",
+      "source": "common/ClientboundUpdateTagsPacket.java",
+      "sourceSha256": "005fdf3febf66c5bee3e399513355a076f77d1ac5575ebf29ae917237fa038d8",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 15,
+      "identifier": "select_known_packs",
+      "class": "ClientboundSelectKnownPacks",
+      "schemaName": "select_known_packs",
+      "schemaType": "packet_common_select_known_packs",
+      "source": "configuration/ClientboundSelectKnownPacks.java",
+      "sourceSha256": "f22098c8be3017f6f84c310ba6d49905c97a502a1327a1910b161835f90a0a76",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/play.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 16,
+      "identifier": "custom_report_details",
+      "class": "ClientboundCustomReportDetailsPacket",
+      "schemaName": "custom_report_details",
+      "schemaType": "packet_common_custom_report_details",
+      "source": "common/ClientboundCustomReportDetailsPacket.java",
+      "sourceSha256": "7556f6312f5d035562f4d9f019cebef210ccb2af303e83f43530a1955065925d",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 17,
+      "identifier": "server_links",
+      "class": "ClientboundServerLinksPacket",
+      "schemaName": "server_links",
+      "schemaType": "packet_common_server_links",
+      "source": "common/ClientboundServerLinksPacket.java",
+      "sourceSha256": "a257e47fca2b21c2968705722b1a89b7936b1667e1d4f1e18d906739e55c3b53",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 18,
+      "identifier": "clear_dialog",
+      "class": "ClientboundClearDialogPacket",
+      "schemaName": "clear_dialog",
+      "schemaType": "packet_common_clear_dialog",
+      "source": "common/ClientboundClearDialogPacket.java",
+      "sourceSha256": "0571c00f7eafef0963baba9868a425d6426942cd67d770cc73565bdc9ca6bdf4",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 19,
+      "identifier": "show_dialog",
+      "class": "ClientboundShowDialogPacket",
+      "schemaName": "show_dialog",
+      "schemaType": "packet_show_dialog",
+      "source": "common/ClientboundShowDialogPacket.java",
+      "sourceSha256": "101bbc8a34250be700955c24a7ec4bb06d8049cb09ffd4436d853f52008f4401",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "configuration",
+      "direction": "toClient",
+      "id": 20,
+      "identifier": "code_of_conduct",
+      "class": "ClientboundCodeOfConductPacket",
+      "schemaName": "code_of_conduct",
+      "schemaType": "packet_code_of_conduct",
+      "source": "configuration/ClientboundCodeOfConductPacket.java",
+      "sourceSha256": "c53ca9625d7f90765c5290a668f672f7d5c1471453d18f014c480622b73f1409",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/play.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 0,
+      "identifier": "accept_teleportation",
+      "class": "ServerboundAcceptTeleportationPacket",
+      "schemaName": "teleport_confirm",
+      "schemaType": "packet_teleport_confirm",
+      "source": "game/ServerboundAcceptTeleportationPacket.java",
+      "sourceSha256": "05085fb3c2c557c2477f2b57d72918c3490f0af8ac8d070854cb9c2c93618412",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 1,
+      "identifier": "attack",
+      "class": "ServerboundAttackPacket",
+      "schemaName": "attack",
+      "schemaType": "packet_attack",
+      "source": "game/ServerboundAttackPacket.java",
+      "sourceSha256": "f1fe91e5c144861241c7fd4fbcbff214a24e549f55104c09a9deceb6ccc79033",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 2,
+      "identifier": "block_entity_tag_query",
+      "class": "ServerboundBlockEntityTagQueryPacket",
+      "schemaName": "query_block_nbt",
+      "schemaType": "packet_query_block_nbt",
+      "source": "game/ServerboundBlockEntityTagQueryPacket.java",
+      "sourceSha256": "766cef45f4b39ab5282905d1bd727a64a86a66d393264e0eeaeb0126db1755f8",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 3,
+      "identifier": "bundle_item_selected",
+      "class": "ServerboundSelectBundleItemPacket",
+      "schemaName": "select_bundle_item",
+      "schemaType": "packet_select_bundle_item",
+      "source": "game/ServerboundSelectBundleItemPacket.java",
+      "sourceSha256": "2b59bdba0a0f7201c0feef80549ad03013c6b3b2733f8056a25b2998d782afa6",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 4,
+      "identifier": "change_difficulty",
+      "class": "ServerboundChangeDifficultyPacket",
+      "schemaName": "set_difficulty",
+      "schemaType": "packet_set_difficulty",
+      "source": "game/ServerboundChangeDifficultyPacket.java",
+      "sourceSha256": "cb6dc7ea58953c128fc974fa4b3830fdd23ce5686919883355585ebf946cab40",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 5,
+      "identifier": "change_game_mode",
+      "class": "ServerboundChangeGameModePacket",
+      "schemaName": "change_gamemode",
+      "schemaType": "packet_change_gamemode",
+      "source": "game/ServerboundChangeGameModePacket.java",
+      "sourceSha256": "40cf2832318f5b21b967bdb3c52d7d88aaa94e17dc68a53ebe69a01959ba0873",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 6,
+      "identifier": "chat_ack",
+      "class": "ServerboundChatAckPacket",
+      "schemaName": "message_acknowledgement",
+      "schemaType": "packet_message_acknowledgement",
+      "source": "game/ServerboundChatAckPacket.java",
+      "sourceSha256": "a7dd5c54112f3457b84e85042321dcc84750d5a609bbb5c014e94df31b3c9636",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 7,
+      "identifier": "chat_command",
+      "class": "ServerboundChatCommandPacket",
+      "schemaName": "chat_command",
+      "schemaType": "packet_chat_command",
+      "source": "game/ServerboundChatCommandPacket.java",
+      "sourceSha256": "774ac48040e028012a630368f1d83b3f59f3591d779d56386138367b78c4be14",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 8,
+      "identifier": "chat_command_signed",
+      "class": "ServerboundChatCommandSignedPacket",
+      "schemaName": "chat_command_signed",
+      "schemaType": "packet_chat_command_signed",
+      "source": "game/ServerboundChatCommandSignedPacket.java",
+      "sourceSha256": "d8bc1f908644fdd9a06be7427abc95b707d067ab1d9a79daf6e28c5604636365",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 9,
+      "identifier": "chat",
+      "class": "ServerboundChatPacket",
+      "schemaName": "chat_message",
+      "schemaType": "packet_chat_message",
+      "source": "game/ServerboundChatPacket.java",
+      "sourceSha256": "9080fa905eb1f15804951cf589ab541f084001fcd9c10507bc0416bf30d366e8",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 10,
+      "identifier": "chat_session_update",
+      "class": "ServerboundChatSessionUpdatePacket",
+      "schemaName": "chat_session_update",
+      "schemaType": "packet_chat_session_update",
+      "source": "game/ServerboundChatSessionUpdatePacket.java",
+      "sourceSha256": "329f06c6b37b890ffec3793faaf3e342109e7759acb7f4e8d445203e0e503cf0",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 11,
+      "identifier": "chunk_batch_received",
+      "class": "ServerboundChunkBatchReceivedPacket",
+      "schemaName": "chunk_batch_received",
+      "schemaType": "packet_chunk_batch_received",
+      "source": "game/ServerboundChunkBatchReceivedPacket.java",
+      "sourceSha256": "57701a1c5e8cea9e15467ac48afd5d1a4678b85ddf954db1678951b9f8690c31",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 12,
+      "identifier": "client_command",
+      "class": "ServerboundClientCommandPacket",
+      "schemaName": "client_command",
+      "schemaType": "packet_client_command",
+      "source": "game/ServerboundClientCommandPacket.java",
+      "sourceSha256": "c19c58f06498de42aead86624c10e549de4556e0e7e6cdc23f1004a39aa03233",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 13,
+      "identifier": "client_tick_end",
+      "class": "ServerboundClientTickEndPacket",
+      "schemaName": "tick_end",
+      "schemaType": "packet_tick_end",
+      "source": "game/ServerboundClientTickEndPacket.java",
+      "sourceSha256": "0745cbc63003fd5c26bad8c6e30e1b6533cdbbb2f2c7de6d7b7cd24102923670",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 14,
+      "identifier": "client_information",
+      "class": "ServerboundClientInformationPacket",
+      "schemaName": "settings",
+      "schemaType": "packet_common_settings",
+      "source": "common/ServerboundClientInformationPacket.java",
+      "sourceSha256": "27520dae10e6972e8e65439ea62d7c0941ac47ea16aec382a33f98128992527d",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 15,
+      "identifier": "command_suggestion",
+      "class": "ServerboundCommandSuggestionPacket",
+      "schemaName": "tab_complete",
+      "schemaType": "packet_tab_complete",
+      "source": "game/ServerboundCommandSuggestionPacket.java",
+      "sourceSha256": "4a30aa5b2bf3461d12b1afd4ba752c9eb6cfaf4121ce669ab40325c6b2e0b834",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 16,
+      "identifier": "configuration_acknowledged",
+      "class": "ServerboundConfigurationAcknowledgedPacket",
+      "schemaName": "configuration_acknowledged",
+      "schemaType": "packet_configuration_acknowledged",
+      "source": "game/ServerboundConfigurationAcknowledgedPacket.java",
+      "sourceSha256": "68bb943677cd4b88483db7400691026fe28c3c4626773e6e48bf88f574dda608",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 17,
+      "identifier": "container_button_click",
+      "class": "ServerboundContainerButtonClickPacket",
+      "schemaName": "enchant_item",
+      "schemaType": "packet_enchant_item",
+      "source": "game/ServerboundContainerButtonClickPacket.java",
+      "sourceSha256": "a22489d73700721f6c80d656553f4e7a24cd7c83d6692814aabdbb6f4ec7541c",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 18,
+      "identifier": "container_click",
+      "class": "ServerboundContainerClickPacket",
+      "schemaName": "window_click",
+      "schemaType": "packet_window_click",
+      "source": "game/ServerboundContainerClickPacket.java",
+      "sourceSha256": "a708f82d3b2e6408f832429f35305d2866ce3f0bdf19200692c38af6d1cf1f7b",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 19,
+      "identifier": "container_close",
+      "class": "ServerboundContainerClosePacket",
+      "schemaName": "close_window",
+      "schemaType": "packet_close_window",
+      "source": "game/ServerboundContainerClosePacket.java",
+      "sourceSha256": "da5628a9d63278abe1f65d8af6ee8e695b182fd5153a935f52db8d8b9c37cc44",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/inventory.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 20,
+      "identifier": "container_slot_state_changed",
+      "class": "ServerboundContainerSlotStateChangedPacket",
+      "schemaName": "set_slot_state",
+      "schemaType": "packet_set_slot_state",
+      "source": "game/ServerboundContainerSlotStateChangedPacket.java",
+      "sourceSha256": "e87b3fd71e6429d8c926823713b537aefb7565b8248db7bdba2eae7c68a6909e",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 21,
+      "identifier": "cookie_response",
+      "class": "ServerboundCookieResponsePacket",
+      "schemaName": "cookie_response",
+      "schemaType": "packet_common_cookie_response",
+      "source": "cookie/ServerboundCookieResponsePacket.java",
+      "sourceSha256": "3a246a968797d36cfb64af9555bc3c58b157f0f6c8d30b4760f24846816289df",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 22,
+      "identifier": "custom_payload",
+      "class": "ServerboundCustomPayloadPacket",
+      "schemaName": "custom_payload",
+      "schemaType": "packet_custom_payload",
+      "source": "common/ServerboundCustomPayloadPacket.java",
+      "sourceSha256": "a78c9f1345fe588d58ceea93760c9751c9c4861e240a272f8f4ef3bc9c449987",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/pluginChannels.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 23,
+      "identifier": "debug_subscription_request",
+      "class": "ServerboundDebugSubscriptionRequestPacket",
+      "schemaName": "debug_subscription_request",
+      "schemaType": "packet_debug_subscription_request",
+      "source": "game/ServerboundDebugSubscriptionRequestPacket.java",
+      "sourceSha256": "69b94bdb2269c725589f1dde3085e1f2aa21beab6670b5833d6fcce1f84bfb08",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 24,
+      "identifier": "edit_book",
+      "class": "ServerboundEditBookPacket",
+      "schemaName": "edit_book",
+      "schemaType": "packet_edit_book",
+      "source": "game/ServerboundEditBookPacket.java",
+      "sourceSha256": "8559bbe33d481f937869aed54203c960483b72d75519d07297cfcb4d8285cb44",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 25,
+      "identifier": "entity_tag_query",
+      "class": "ServerboundEntityTagQueryPacket",
+      "schemaName": "query_entity_nbt",
+      "schemaType": "packet_query_entity_nbt",
+      "source": "game/ServerboundEntityTagQueryPacket.java",
+      "sourceSha256": "90bc9b7058084785be2e8ca1d15a1a7c1297fbd49816834c5c27e3fb87fa33f2",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 26,
+      "identifier": "interact",
+      "class": "ServerboundInteractPacket",
+      "schemaName": "use_entity",
+      "schemaType": "packet_use_entity",
+      "source": "game/ServerboundInteractPacket.java",
+      "sourceSha256": "a7fa704dca27436a07ff579ea83e0cdf5c10a26346f475d4de03fa6620f12b60",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 27,
+      "identifier": "jigsaw_generate",
+      "class": "ServerboundJigsawGeneratePacket",
+      "schemaName": "generate_structure",
+      "schemaType": "packet_generate_structure",
+      "source": "game/ServerboundJigsawGeneratePacket.java",
+      "sourceSha256": "bbba7abbcf50223df118bd9866564097517874cec93248da3fb84c9ee54b8b21",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 28,
+      "identifier": "keep_alive",
+      "class": "ServerboundKeepAlivePacket",
+      "schemaName": "keep_alive",
+      "schemaType": "packet_keep_alive",
+      "source": "common/ServerboundKeepAlivePacket.java",
+      "sourceSha256": "f691c69e450193fd3f719d2c3a910c086830f9f114e62b1b45b8ea959ed5e187",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/keepalive.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 29,
+      "identifier": "lock_difficulty",
+      "class": "ServerboundLockDifficultyPacket",
+      "schemaName": "lock_difficulty",
+      "schemaType": "packet_lock_difficulty",
+      "source": "game/ServerboundLockDifficultyPacket.java",
+      "sourceSha256": "9f5763b4d376cb61549db7b5cd8d2449c6a594fdb8e0ebbe21d4ed6f1361f9d9",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 30,
+      "identifier": "move_player_pos",
+      "class": "ServerboundMovePlayerPacket.Pos",
+      "schemaName": "position",
+      "schemaType": "packet_position",
+      "source": "game/ServerboundMovePlayerPacket.java",
+      "sourceSha256": "1b63f7d2ae48e583e065bf10b5f1dec7d5c12bbe949af6d5b0e99972c782da83",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/packets26_1.js",
+        "mineflayer/lib/plugins/physics.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 31,
+      "identifier": "move_player_pos_rot",
+      "class": "ServerboundMovePlayerPacket.PosRot",
+      "schemaName": "position_look",
+      "schemaType": "packet_position_look",
+      "source": "game/ServerboundMovePlayerPacket.java",
+      "sourceSha256": "1b63f7d2ae48e583e065bf10b5f1dec7d5c12bbe949af6d5b0e99972c782da83",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 32,
+      "identifier": "move_player_rot",
+      "class": "ServerboundMovePlayerPacket.Rot",
+      "schemaName": "look",
+      "schemaType": "packet_look",
+      "source": "game/ServerboundMovePlayerPacket.java",
+      "sourceSha256": "1b63f7d2ae48e583e065bf10b5f1dec7d5c12bbe949af6d5b0e99972c782da83",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 33,
+      "identifier": "move_player_status_only",
+      "class": "ServerboundMovePlayerPacket.StatusOnly",
+      "schemaName": "flying",
+      "schemaType": "packet_flying",
+      "source": "game/ServerboundMovePlayerPacket.java",
+      "sourceSha256": "1b63f7d2ae48e583e065bf10b5f1dec7d5c12bbe949af6d5b0e99972c782da83",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 34,
+      "identifier": "move_vehicle",
+      "class": "ServerboundMoveVehiclePacket",
+      "schemaName": "vehicle_move",
+      "schemaType": "packet_vehicle_move",
+      "source": "game/ServerboundMoveVehiclePacket.java",
+      "sourceSha256": "57f17fa51cedc613d9d54c5f822c2e58453d76efc81774daa4fc55994377e552",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 35,
+      "identifier": "paddle_boat",
+      "class": "ServerboundPaddleBoatPacket",
+      "schemaName": "steer_boat",
+      "schemaType": "packet_steer_boat",
+      "source": "game/ServerboundPaddleBoatPacket.java",
+      "sourceSha256": "0924228013e8dd17d49fef0cddd33aec5935addd17639d06173783cda11cb9d6",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 36,
+      "identifier": "pick_item_from_block",
+      "class": "ServerboundPickItemFromBlockPacket",
+      "schemaName": "pick_item_from_block",
+      "schemaType": "packet_pick_item_from_block",
+      "source": "game/ServerboundPickItemFromBlockPacket.java",
+      "sourceSha256": "d303aedc590ece9122074683537bc77c13714807ae2e3b85dd78a0f2b5fcb99f",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 37,
+      "identifier": "pick_item_from_entity",
+      "class": "ServerboundPickItemFromEntityPacket",
+      "schemaName": "pick_item_from_entity",
+      "schemaType": "packet_pick_item_from_entity",
+      "source": "game/ServerboundPickItemFromEntityPacket.java",
+      "sourceSha256": "bf67183f9e52917d98a302527e186dba3758adff3515bd53abe919bd1ba628da",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 38,
+      "identifier": "ping_request",
+      "class": "ServerboundPingRequestPacket",
+      "schemaName": "ping_request",
+      "schemaType": "packet_ping_request",
+      "source": "ping/ServerboundPingRequestPacket.java",
+      "sourceSha256": "b28cb10d99766e41c0add2e1356d0db74e71098b2248c59a38472126e68f9448",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 39,
+      "identifier": "place_recipe",
+      "class": "ServerboundPlaceRecipePacket",
+      "schemaName": "craft_recipe_request",
+      "schemaType": "packet_craft_recipe_request",
+      "source": "game/ServerboundPlaceRecipePacket.java",
+      "sourceSha256": "5eff9517d35a05e1971cbd9f579b5a25fa148f505e59f06acb8872a55db89881",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 40,
+      "identifier": "player_abilities",
+      "class": "ServerboundPlayerAbilitiesPacket",
+      "schemaName": "abilities",
+      "schemaType": "packet_abilities",
+      "source": "game/ServerboundPlayerAbilitiesPacket.java",
+      "sourceSha256": "3a7d755649e1c4931f8cb53b21009df7a60cb81aab416f38fc24c23e80fd3757",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 41,
+      "identifier": "player_action",
+      "class": "ServerboundPlayerActionPacket",
+      "schemaName": "block_dig",
+      "schemaType": "packet_block_dig",
+      "source": "game/ServerboundPlayerActionPacket.java",
+      "sourceSha256": "3e7dc95b314e1b597602cc3c1acc3cc180e6811df454d205643ca80fa5353e30",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 42,
+      "identifier": "player_command",
+      "class": "ServerboundPlayerCommandPacket",
+      "schemaName": "entity_action",
+      "schemaType": "packet_entity_action",
+      "source": "game/ServerboundPlayerCommandPacket.java",
+      "sourceSha256": "a2e193f111615df67062916ee5708b4ac27a4f1f322da2f7bbe3e601cd360c6a",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 43,
+      "identifier": "player_input",
+      "class": "ServerboundPlayerInputPacket",
+      "schemaName": "player_input",
+      "schemaType": "packet_player_input",
+      "source": "game/ServerboundPlayerInputPacket.java",
+      "sourceSha256": "74b198515b4f18726f000b86752942d929ecdf46509d0c402de5c31a9db1ca04",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 44,
+      "identifier": "player_loaded",
+      "class": "ServerboundPlayerLoadedPacket",
+      "schemaName": "player_loaded",
+      "schemaType": "packet_player_loaded",
+      "source": "game/ServerboundPlayerLoadedPacket.java",
+      "sourceSha256": "f096128267b49948ad44a2aa377f9fe7ecc3fb3cf6fc7deeced87c1985af1032",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 45,
+      "identifier": "pong",
+      "class": "ServerboundPongPacket",
+      "schemaName": "pong",
+      "schemaType": "packet_pong",
+      "source": "common/ServerboundPongPacket.java",
+      "sourceSha256": "3e5b42edb5311d4c7c233cc874003d785978648639c06a32a63e3d483d780307",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 46,
+      "identifier": "punch",
+      "class": "ServerboundPunchPacket",
+      "schemaName": "punch",
+      "schemaType": "packet_punch",
+      "source": "game/ServerboundPunchPacket.java",
+      "sourceSha256": "ae0c79b5263e75921635e6db448fa1099791f5194fb56a35d3c7adef9b44b6d6",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 47,
+      "identifier": "recipe_book_change_settings",
+      "class": "ServerboundRecipeBookChangeSettingsPacket",
+      "schemaName": "recipe_book",
+      "schemaType": "packet_recipe_book",
+      "source": "game/ServerboundRecipeBookChangeSettingsPacket.java",
+      "sourceSha256": "b2153ef02f8ee95b0ce08f5a5fe1cfb0e2926b9d5bab6e8d4e2bb18c2304d259",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 48,
+      "identifier": "recipe_book_seen_recipe",
+      "class": "ServerboundRecipeBookSeenRecipePacket",
+      "schemaName": "displayed_recipe",
+      "schemaType": "packet_displayed_recipe",
+      "source": "game/ServerboundRecipeBookSeenRecipePacket.java",
+      "sourceSha256": "f642ef66a1018c99bc5965b70ba17c07cd278bbfe038a4be03b923991cae2897",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 49,
+      "identifier": "rename_item",
+      "class": "ServerboundRenameItemPacket",
+      "schemaName": "name_item",
+      "schemaType": "packet_name_item",
+      "source": "game/ServerboundRenameItemPacket.java",
+      "sourceSha256": "a5f9a0fe77e9c11d58998c84ce1db37ffc836cee79e4e1b541f8d00a53dcdd5c",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 50,
+      "identifier": "resource_pack",
+      "class": "ServerboundResourcePackPacket",
+      "schemaName": "resource_pack_receive",
+      "schemaType": "packet_resource_pack_receive",
+      "source": "common/ServerboundResourcePackPacket.java",
+      "sourceSha256": "da6d78bb946f1ae9963cca0cb5f0f354d3ee9277ee2b55350c75178aac357a88",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 51,
+      "identifier": "seen_advancements",
+      "class": "ServerboundSeenAdvancementsPacket",
+      "schemaName": "advancement_tab",
+      "schemaType": "packet_advancement_tab",
+      "source": "game/ServerboundSeenAdvancementsPacket.java",
+      "sourceSha256": "0f1d7c003d3a2f5736f8d730336ec9f2c902e6b7b473c9773d1a841b7c6673d5",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 52,
+      "identifier": "select_trade",
+      "class": "ServerboundSelectTradePacket",
+      "schemaName": "select_trade",
+      "schemaType": "packet_select_trade",
+      "source": "game/ServerboundSelectTradePacket.java",
+      "sourceSha256": "2adbb1a40ee0a176e671e176c92a1a21b8a296d5172d3a8bc17e7c3a1884a2eb",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 53,
+      "identifier": "set_beacon",
+      "class": "ServerboundSetBeaconPacket",
+      "schemaName": "set_beacon_effect",
+      "schemaType": "packet_set_beacon_effect",
+      "source": "game/ServerboundSetBeaconPacket.java",
+      "sourceSha256": "1a813a0bda71a58c1e6189fd74910d8b141f483a334490101b0b2972e0745035",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 54,
+      "identifier": "set_carried_item",
+      "class": "ServerboundSetCarriedItemPacket",
+      "schemaName": "held_item_slot",
+      "schemaType": "packet_held_item_slot",
+      "source": "game/ServerboundSetCarriedItemPacket.java",
+      "sourceSha256": "d836ee6945c6644c70aa24446edcdfb56f3ad3ccf3cdeccaa73cf53eaf3085a8",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/inventory.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 55,
+      "identifier": "set_command_block",
+      "class": "ServerboundSetCommandBlockPacket",
+      "schemaName": "update_command_block",
+      "schemaType": "packet_update_command_block",
+      "source": "game/ServerboundSetCommandBlockPacket.java",
+      "sourceSha256": "ed8814edc3ad16a439fb4d9a3541a0e341220fc04890ea95886f5971610582d7",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 56,
+      "identifier": "set_command_minecart",
+      "class": "ServerboundSetCommandMinecartPacket",
+      "schemaName": "update_command_block_minecart",
+      "schemaType": "packet_update_command_block_minecart",
+      "source": "game/ServerboundSetCommandMinecartPacket.java",
+      "sourceSha256": "abc6fb2eb79dff8ea5e1b3ef094e45ce8c30834daf720745e4721675d9cc1764",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 57,
+      "identifier": "set_creative_mode_slot",
+      "class": "ServerboundSetCreativeModeSlotPacket",
+      "schemaName": "set_creative_slot",
+      "schemaType": "packet_set_creative_slot",
+      "source": "game/ServerboundSetCreativeModeSlotPacket.java",
+      "sourceSha256": "09892906cc75585cac5f9a9e7433f8c17dd7dbacf4dc1f2bfd3b8e8308ccd074",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 58,
+      "identifier": "set_game_rule",
+      "class": "ServerboundSetGameRulePacket",
+      "schemaName": "set_game_rule",
+      "schemaType": "packet_set_game_rule",
+      "source": "game/ServerboundSetGameRulePacket.java",
+      "sourceSha256": "a9392049cd41167ff6a872aafb365b468d0f8860c4ad57fcd0787e934b6408b8",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 59,
+      "identifier": "set_jigsaw_block",
+      "class": "ServerboundSetJigsawBlockPacket",
+      "schemaName": "update_jigsaw_block",
+      "schemaType": "packet_update_jigsaw_block",
+      "source": "game/ServerboundSetJigsawBlockPacket.java",
+      "sourceSha256": "04496a85018a0a82d4dc18358b91029d295cdf94cbffe41af91f8439cf2dfd33",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 60,
+      "identifier": "set_structure_block",
+      "class": "ServerboundSetStructureBlockPacket",
+      "schemaName": "update_structure_block",
+      "schemaType": "packet_update_structure_block",
+      "source": "game/ServerboundSetStructureBlockPacket.java",
+      "sourceSha256": "bd7f024be10556e79beea45e627246a36725522712e8d2667dcb44e27a93d9ba",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 61,
+      "identifier": "set_test_block",
+      "class": "ServerboundSetTestBlockPacket",
+      "schemaName": "set_test_block",
+      "schemaType": "packet_set_test_block",
+      "source": "game/ServerboundSetTestBlockPacket.java",
+      "sourceSha256": "4e17e8904d375357b5f14602f77a2819750c6eb61da1b679210f3e781b818161",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 62,
+      "identifier": "sign_update",
+      "class": "ServerboundSignUpdatePacket",
+      "schemaName": "update_sign",
+      "schemaType": "packet_update_sign",
+      "source": "game/ServerboundSignUpdatePacket.java",
+      "sourceSha256": "a203358ebd3ab92a9e07f9d7aa2b1b0337c1ca744c5a1ee7a6269b2cdf782f41",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 63,
+      "identifier": "spectator_action",
+      "class": "ServerboundSpectatorActionPacket",
+      "schemaName": "spectate",
+      "schemaType": "packet_spectate",
+      "source": "game/ServerboundSpectatorActionPacket.java",
+      "sourceSha256": "60bf5796461bf5c90d89c44b571202c026604474f78fc546e07a43453ec216f2",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 64,
+      "identifier": "teleport_to_entity",
+      "class": "ServerboundTeleportToEntityPacket",
+      "schemaName": "teleport_to_entity",
+      "schemaType": "packet_teleport_to_entity",
+      "source": "game/ServerboundTeleportToEntityPacket.java",
+      "sourceSha256": "24b357cbd4b9cfce6335b2fefd28aa1eb557942fe24daa49b6097a4c4083a8eb",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 65,
+      "identifier": "test_instance_block_action",
+      "class": "ServerboundTestInstanceBlockActionPacket",
+      "schemaName": "test_instance_block_action",
+      "schemaType": "packet_test_instance_block_action",
+      "source": "game/ServerboundTestInstanceBlockActionPacket.java",
+      "sourceSha256": "e386a1a8bd5d42289a8949bdb2fe5bf08a1341049e830cbb6474c84163f38e71",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 66,
+      "identifier": "use_item_on",
+      "class": "ServerboundUseItemOnPacket",
+      "schemaName": "block_place",
+      "schemaType": "packet_block_place",
+      "source": "game/ServerboundUseItemOnPacket.java",
+      "sourceSha256": "b98698814d8d888ed07a51ead3fb7d22128e5e5b5749c6e2ad2374ac8a33f9fb",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 67,
+      "identifier": "use_item",
+      "class": "ServerboundUseItemPacket",
+      "schemaName": "use_item",
+      "schemaType": "packet_use_item",
+      "source": "game/ServerboundUseItemPacket.java",
+      "sourceSha256": "b78c89f29d7132063816348ba2a1a59d4c118abc63505856197715eb9770af12",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toServer",
+      "id": 68,
+      "identifier": "custom_click_action",
+      "class": "ServerboundCustomClickActionPacket",
+      "schemaName": "custom_click_action",
+      "schemaType": "packet_common_custom_click_action",
+      "source": "common/ServerboundCustomClickActionPacket.java",
+      "sourceSha256": "009ea5989fc4ecd56cafc85b52508d76ec6ec98867f95b60f81bc418a8c28404",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 0,
+      "identifier": "bundle_delimiter",
+      "class": "ClientboundBundleDelimiterPacket",
+      "schemaName": "bundle_delimiter",
+      "schemaType": "void",
+      "source": "game/ClientboundBundleDelimiterPacket.java",
+      "sourceSha256": "d9836b1f2a6a6b0559b4976f1bea411b62531910e91468b04f7a95a32a3f41cf",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 1,
+      "identifier": "add_entity",
+      "class": "ClientboundAddEntityPacket",
+      "schemaName": "spawn_entity",
+      "schemaType": "packet_spawn_entity",
+      "source": "game/ClientboundAddEntityPacket.java",
+      "sourceSha256": "e5fce0e7ea1920ccb315fb93addb22a1f654c261f98354b928d0e048c4262834",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js",
+        "mineflayer/lib/plugins/fishing.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 2,
+      "identifier": "animate",
+      "class": "ClientboundAnimatePacket",
+      "schemaName": "animation",
+      "schemaType": "packet_animation",
+      "source": "game/ClientboundAnimatePacket.java",
+      "sourceSha256": "12d923083718d04e78cd785636a35cc984b3c62f65a804114d62d0ecbace4219",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 3,
+      "identifier": "award_stats",
+      "class": "ClientboundAwardStatsPacket",
+      "schemaName": "statistics",
+      "schemaType": "packet_statistics",
+      "source": "game/ClientboundAwardStatsPacket.java",
+      "sourceSha256": "167747d8460bcd071d4bb8040d0d62deb825c7fc709612cf2f50896334ca9672",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 4,
+      "identifier": "block_changed_ack",
+      "class": "ClientboundBlockChangedAckPacket",
+      "schemaName": "acknowledge_player_digging",
+      "schemaType": "packet_acknowledge_player_digging",
+      "source": "game/ClientboundBlockChangedAckPacket.java",
+      "sourceSha256": "fa256cec0b5be0a2a8ad71c65dcf0d0d1b7aa373f8ede1a0165de5ad123fa5da",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 5,
+      "identifier": "block_destruction",
+      "class": "ClientboundBlockDestructionPacket",
+      "schemaName": "block_break_animation",
+      "schemaType": "packet_block_break_animation",
+      "source": "game/ClientboundBlockDestructionPacket.java",
+      "sourceSha256": "9bd5e6db396749abafc39378cb6c0380a69aaf5febf512dda16fb3dfa89b4c68",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/block_actions.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 6,
+      "identifier": "block_entity_data",
+      "class": "ClientboundBlockEntityDataPacket",
+      "schemaName": "tile_entity_data",
+      "schemaType": "packet_tile_entity_data",
+      "source": "game/ClientboundBlockEntityDataPacket.java",
+      "sourceSha256": "525af946374c5195d4b5c3e372ccfd589d86ec87a906a3060ae7ab991c9629ee",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 7,
+      "identifier": "block_event",
+      "class": "ClientboundBlockEventPacket",
+      "schemaName": "block_action",
+      "schemaType": "packet_block_action",
+      "source": "game/ClientboundBlockEventPacket.java",
+      "sourceSha256": "0d74435c1c091af6453a95e1923bce0582ec5b69bcdd39526adf9f5896d1b572",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/block_actions.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 8,
+      "identifier": "block_update",
+      "class": "ClientboundBlockUpdatePacket",
+      "schemaName": "block_change",
+      "schemaType": "packet_block_change",
+      "source": "game/ClientboundBlockUpdatePacket.java",
+      "sourceSha256": "cb5da562002d0b94f8e6fd2658adea510786a393b7534b1ac620d46fdf5c53bf",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 9,
+      "identifier": "boss_event",
+      "class": "ClientboundBossEventPacket",
+      "schemaName": "boss_bar",
+      "schemaType": "packet_boss_bar",
+      "source": "game/ClientboundBossEventPacket.java",
+      "sourceSha256": "8ff067dc334cad0517d079fea87410d698f7c42ffff218d34f22aab7bfade07e",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/boss_bar.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 10,
+      "identifier": "change_difficulty",
+      "class": "ClientboundChangeDifficultyPacket",
+      "schemaName": "difficulty",
+      "schemaType": "packet_difficulty",
+      "source": "game/ClientboundChangeDifficultyPacket.java",
+      "sourceSha256": "7790146aa94877bc0fd46460fb19892b3c41a13c8e39fe7e5ff7a246ca43d2ac",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/game.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 11,
+      "identifier": "chunk_batch_finished",
+      "class": "ClientboundChunkBatchFinishedPacket",
+      "schemaName": "chunk_batch_finished",
+      "schemaType": "packet_chunk_batch_finished",
+      "source": "game/ClientboundChunkBatchFinishedPacket.java",
+      "sourceSha256": "39b5aa8065d6fc09d43fc079f7a07a86199003004b2b89fd5b1b057040eee7b8",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 12,
+      "identifier": "chunk_batch_start",
+      "class": "ClientboundChunkBatchStartPacket",
+      "schemaName": "chunk_batch_start",
+      "schemaType": "packet_chunk_batch_start",
+      "source": "game/ClientboundChunkBatchStartPacket.java",
+      "sourceSha256": "bea5c7488f1cca20ccdd9dbb420a50b3f96dd8153f61eada0106323a6e144ec5",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 13,
+      "identifier": "chunks_biomes",
+      "class": "ClientboundChunksBiomesPacket",
+      "schemaName": "chunk_biomes",
+      "schemaType": "packet_chunk_biomes",
+      "source": "game/ClientboundChunksBiomesPacket.java",
+      "sourceSha256": "e8d1f853612d61676b872ad32d31c5e6eec50e86874703f2e58c8fc45e7d05d2",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 14,
+      "identifier": "clear_titles",
+      "class": "ClientboundClearTitlesPacket",
+      "schemaName": "clear_titles",
+      "schemaType": "packet_clear_titles",
+      "source": "game/ClientboundClearTitlesPacket.java",
+      "sourceSha256": "f968c71ba5b85ae645bc1bc6f69c15b5272008ee0953d47ca02200169529bc63",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/title.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 15,
+      "identifier": "command_suggestions",
+      "class": "ClientboundCommandSuggestionsPacket",
+      "schemaName": "tab_complete",
+      "schemaType": "packet_tab_complete",
+      "source": "game/ClientboundCommandSuggestionsPacket.java",
+      "sourceSha256": "aa75cca7ac3c28596949c21c75dcd9b7da2e98ae2ae239dafe16f72c0a024f7d",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 16,
+      "identifier": "commands",
+      "class": "ClientboundCommandsPacket",
+      "schemaName": "declare_commands",
+      "schemaType": "packet_declare_commands",
+      "source": "game/ClientboundCommandsPacket.java",
+      "sourceSha256": "5c667f3e7feccebb130c0463cecb6735e00568f3fdb14e1666931829810782d4",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/chat.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 17,
+      "identifier": "container_close",
+      "class": "ClientboundContainerClosePacket",
+      "schemaName": "close_window",
+      "schemaType": "packet_close_window",
+      "source": "game/ClientboundContainerClosePacket.java",
+      "sourceSha256": "28b742166821795028474aac667110123ef711b4f8648b0045fb34f5d1e7b6ee",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/inventory.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 18,
+      "identifier": "container_set_content",
+      "class": "ClientboundContainerSetContentPacket",
+      "schemaName": "window_items",
+      "schemaType": "packet_window_items",
+      "source": "game/ClientboundContainerSetContentPacket.java",
+      "sourceSha256": "1f653d2459b3b14bbc2643839f7de25102fa99aae46273c0d9fc28e88e23b1cd",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/inventory.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 19,
+      "identifier": "container_set_data",
+      "class": "ClientboundContainerSetDataPacket",
+      "schemaName": "craft_progress_bar",
+      "schemaType": "packet_craft_progress_bar",
+      "source": "game/ClientboundContainerSetDataPacket.java",
+      "sourceSha256": "0ae9993a7c88c6aa45cb374b8dde188261e4248824610312d325721df3e444ba",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/enchantment_table.js",
+        "mineflayer/lib/plugins/furnace.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 20,
+      "identifier": "container_set_slot",
+      "class": "ClientboundContainerSetSlotPacket",
+      "schemaName": "set_slot",
+      "schemaType": "packet_set_slot",
+      "source": "game/ClientboundContainerSetSlotPacket.java",
+      "sourceSha256": "2b93fc08c31e99ed082e80ed3b033dc87e078c714236d746ffd8b9eb8f6be438",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/inventory.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 21,
+      "identifier": "cookie_request",
+      "class": "ClientboundCookieRequestPacket",
+      "schemaName": "cookie_request",
+      "schemaType": "packet_common_cookie_request",
+      "source": "cookie/ClientboundCookieRequestPacket.java",
+      "sourceSha256": "8a96fcf1788c13c13b163f869ed8167e45cdd19d569ff025eb344f745bc62f59",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 22,
+      "identifier": "cooldown",
+      "class": "ClientboundCooldownPacket",
+      "schemaName": "set_cooldown",
+      "schemaType": "packet_set_cooldown",
+      "source": "game/ClientboundCooldownPacket.java",
+      "sourceSha256": "a6eb4243f5f043cd97b2441546d0f9fb13a54a7074324b66a4b31e24ee13876e",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/inventory.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 23,
+      "identifier": "custom_chat_completions",
+      "class": "ClientboundCustomChatCompletionsPacket",
+      "schemaName": "chat_suggestions",
+      "schemaType": "packet_chat_suggestions",
+      "source": "game/ClientboundCustomChatCompletionsPacket.java",
+      "sourceSha256": "3bb95331a5f42a6edd4b2d8f2b7b459e74b620edb74afe04d64882853d376dad",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 24,
+      "identifier": "custom_payload",
+      "class": "ClientboundCustomPayloadPacket",
+      "schemaName": "custom_payload",
+      "schemaType": "packet_custom_payload",
+      "source": "common/ClientboundCustomPayloadPacket.java",
+      "sourceSha256": "5467a4e32511e6dc28088e63d70b230dc5ad719657b493b0d8241f8c53051c3d",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/pluginChannels.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 25,
+      "identifier": "damage_event",
+      "class": "ClientboundDamageEventPacket",
+      "schemaName": "damage_event",
+      "schemaType": "packet_damage_event",
+      "source": "game/ClientboundDamageEventPacket.java",
+      "sourceSha256": "cd42799e990971bb8ad92318ed3a56f64e6c7e34203803b23bca331c21f76364",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 26,
+      "identifier": "debug/block_value",
+      "class": "ClientboundDebugBlockValuePacket",
+      "schemaName": "debug_block_value",
+      "schemaType": "packet_debug_block_value",
+      "source": "game/ClientboundDebugBlockValuePacket.java",
+      "sourceSha256": "dbfc421f718804aa64dd6a7920800a8b36e2ff37d2bc87f0b96a91be73bd02be",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 27,
+      "identifier": "debug/chunk_value",
+      "class": "ClientboundDebugChunkValuePacket",
+      "schemaName": "debug_chunk_value",
+      "schemaType": "packet_debug_chunk_value",
+      "source": "game/ClientboundDebugChunkValuePacket.java",
+      "sourceSha256": "b4d5ff608046dddc41fbe6a1c603ee01130073d236cd4cc135ac5ff2b1bb30f3",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 28,
+      "identifier": "debug/entity_value",
+      "class": "ClientboundDebugEntityValuePacket",
+      "schemaName": "debug_entity_value",
+      "schemaType": "packet_debug_entity_value",
+      "source": "game/ClientboundDebugEntityValuePacket.java",
+      "sourceSha256": "51a63664066cae0ec4a6192e324f34b883f3a1be4ff7792731fd08067f195b2d",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 29,
+      "identifier": "debug/event",
+      "class": "ClientboundDebugEventPacket",
+      "schemaName": "debug_event",
+      "schemaType": "packet_debug_event",
+      "source": "game/ClientboundDebugEventPacket.java",
+      "sourceSha256": "d57cebaa871caf5e1cb395c402f5b65d43a20995bd07c40b0925a3846dfcc5a3",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 30,
+      "identifier": "debug_sample",
+      "class": "ClientboundDebugSamplePacket",
+      "schemaName": "debug_sample",
+      "schemaType": "packet_debug_sample",
+      "source": "game/ClientboundDebugSamplePacket.java",
+      "sourceSha256": "b5baafdc160b8c7d626c33941d3ed4d55d3ca060a5681d6afb740c4c5f1ac163",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 31,
+      "identifier": "delete_chat",
+      "class": "ClientboundDeleteChatPacket",
+      "schemaName": "hide_message",
+      "schemaType": "packet_hide_message",
+      "source": "game/ClientboundDeleteChatPacket.java",
+      "sourceSha256": "6201912b80cf35034f5c7c284af42485e83c25915227dad8e764aa5e7ec816e4",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/chat.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 32,
+      "identifier": "disconnect",
+      "class": "ClientboundDisconnectPacket",
+      "schemaName": "kick_disconnect",
+      "schemaType": "packet_kick_disconnect",
+      "source": "common/ClientboundDisconnectPacket.java",
+      "sourceSha256": "206a9f0864454b96f2a1d764a35712bc618c553475d9c48634662ca6bc6e5192",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/kick.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 33,
+      "identifier": "disguised_chat",
+      "class": "ClientboundDisguisedChatPacket",
+      "schemaName": "profileless_chat",
+      "schemaType": "packet_profileless_chat",
+      "source": "game/ClientboundDisguisedChatPacket.java",
+      "sourceSha256": "6b23f85d687b5eae8aa642c7fdcbf78868869d042a641412034d6dfb712a3037",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/chat.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 34,
+      "identifier": "entity_event",
+      "class": "ClientboundEntityEventPacket",
+      "schemaName": "entity_status",
+      "schemaType": "packet_entity_status",
+      "source": "game/ClientboundEntityEventPacket.java",
+      "sourceSha256": "669fec62417cdf7fdee1f3a9389034e278193593fe865cb9263047f04d15fca6",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js",
+        "mineflayer/lib/plugins/inventory.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 35,
+      "identifier": "entity_position_sync",
+      "class": "ClientboundEntityPositionSyncPacket",
+      "schemaName": "sync_entity_position",
+      "schemaType": "packet_sync_entity_position",
+      "source": "game/ClientboundEntityPositionSyncPacket.java",
+      "sourceSha256": "2d00436022053325f6edf636d2a89d9375c641efee97a93b86c5e29ecfb2dcc2",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 36,
+      "identifier": "explode",
+      "class": "ClientboundExplodePacket",
+      "schemaName": "explosion",
+      "schemaType": "packet_explosion",
+      "source": "game/ClientboundExplodePacket.java",
+      "sourceSha256": "c9d5e783051bcc6eb8c3caf83cc3bedf1039c8d4727130582b5b52c9085b41fb",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js",
+        "mineflayer/lib/plugins/physics.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 37,
+      "identifier": "add_transient_block",
+      "class": "ClientboundAddTransientBlockPacket",
+      "schemaName": "add_transient_block",
+      "schemaType": "packet_add_transient_block",
+      "source": "game/ClientboundAddTransientBlockPacket.java",
+      "sourceSha256": "c19bf4e9cb33c8ac971e3f8126ee456b0ee11c024fe83ed6038f7f05ba4b2a1c",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 38,
+      "identifier": "forget_level_chunk",
+      "class": "ClientboundForgetLevelChunkPacket",
+      "schemaName": "unload_chunk",
+      "schemaType": "packet_unload_chunk",
+      "source": "game/ClientboundForgetLevelChunkPacket.java",
+      "sourceSha256": "596e94d0a434f73d01112c000d0bdc15d2cdec37aa35dc8557fae4ca3ded73b5",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 39,
+      "identifier": "game_event",
+      "class": "ClientboundGameEventPacket",
+      "schemaName": "game_state_change",
+      "schemaType": "packet_game_state_change",
+      "source": "game/ClientboundGameEventPacket.java",
+      "sourceSha256": "d4ab15f0a0d531f2c471dff82a33c4d2a81122d66c51a21437d21c56e83543c0",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/bed.js",
+        "mineflayer/lib/plugins/game.js",
+        "mineflayer/lib/plugins/rain.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 40,
+      "identifier": "game_rule_values",
+      "class": "ClientboundGameRuleValuesPacket",
+      "schemaName": "game_rule_values",
+      "schemaType": "packet_game_rule_values",
+      "source": "game/ClientboundGameRuleValuesPacket.java",
+      "sourceSha256": "da042676c1bfae661ddf7e8a480442354153d657e8017a51ad56305b71d1412a",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/game.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 41,
+      "identifier": "game_test_highlight_pos",
+      "class": "ClientboundGameTestHighlightPosPacket",
+      "schemaName": "game_test_highlight_pos",
+      "schemaType": "packet_game_test_highlight_pos",
+      "source": "game/ClientboundGameTestHighlightPosPacket.java",
+      "sourceSha256": "ad439291959e7233722dfe1ce902ec575a006a9c990de1a29e10dac7c6840309",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 42,
+      "identifier": "mount_screen_open",
+      "class": "ClientboundMountScreenOpenPacket",
+      "schemaName": "open_horse_window",
+      "schemaType": "packet_open_horse_window",
+      "source": "game/ClientboundMountScreenOpenPacket.java",
+      "sourceSha256": "a2de041ba71feb3a932fc98a5b15329e5f8c5c647d6415ed9f90b7223a75ac40",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/inventory.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 43,
+      "identifier": "hurt_animation",
+      "class": "ClientboundHurtAnimationPacket",
+      "schemaName": "hurt_animation",
+      "schemaType": "packet_hurt_animation",
+      "source": "game/ClientboundHurtAnimationPacket.java",
+      "sourceSha256": "b738191ee6d0f5f63226dc8864722ed1d0ecf84df5fd4201f4605edfed64fb5b",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 44,
+      "identifier": "initialize_border",
+      "class": "ClientboundInitializeBorderPacket",
+      "schemaName": "initialize_world_border",
+      "schemaType": "packet_initialize_world_border",
+      "source": "game/ClientboundInitializeBorderPacket.java",
+      "sourceSha256": "0cd3040e225a426a9886db1b515e89413e4a5d4b1c6944010dc602e3c476f8e2",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 45,
+      "identifier": "keep_alive",
+      "class": "ClientboundKeepAlivePacket",
+      "schemaName": "keep_alive",
+      "schemaType": "packet_keep_alive",
+      "source": "common/ClientboundKeepAlivePacket.java",
+      "sourceSha256": "445724c20f011ad6faaf9b20d23e098fc38b8d53b825931ef66137d7ff86fd8a",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/keepalive.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 46,
+      "identifier": "level_chunk_with_light",
+      "class": "ClientboundLevelChunkWithLightPacket",
+      "schemaName": "map_chunk",
+      "schemaType": "packet_map_chunk",
+      "source": "game/ClientboundLevelChunkWithLightPacket.java",
+      "sourceSha256": "e68959898f1edabc5e87e293aeb4acdf97f066dad675604f25ac37fbc924acac",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 47,
+      "identifier": "level_event",
+      "class": "ClientboundLevelEventPacket",
+      "schemaName": "world_event",
+      "schemaType": "packet_world_event",
+      "source": "game/ClientboundLevelEventPacket.java",
+      "sourceSha256": "94cab00c8f9892e23bc22757f34081ae445f148b46849715b93fbe4794bf4f29",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 48,
+      "identifier": "level_particles",
+      "class": "ClientboundLevelParticlesPacket",
+      "schemaName": "world_particles",
+      "schemaType": "packet_world_particles",
+      "source": "game/ClientboundLevelParticlesPacket.java",
+      "sourceSha256": "6002dac9857c084910b5d1948204b97d7e28d32aa65815d71013d54e24485d17",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/fishing.js",
+        "mineflayer/lib/plugins/particle.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 49,
+      "identifier": "light_update",
+      "class": "ClientboundLightUpdatePacket",
+      "schemaName": "update_light",
+      "schemaType": "packet_update_light",
+      "source": "game/ClientboundLightUpdatePacket.java",
+      "sourceSha256": "0396fbf370206a16541f6529957ef0b324b790400544b4e5539d4115ee21a341",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 50,
+      "identifier": "login",
+      "class": "ClientboundLoginPacket",
+      "schemaName": "login",
+      "schemaType": "packet_login",
+      "source": "game/ClientboundLoginPacket.java",
+      "sourceSha256": "5cb8c596003e7dbf9db0583597e7cd6b596b20c650959c3bdc1b24045b458ded",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/play.js",
+        "mineflayer/lib/plugins/blocks.js",
+        "mineflayer/lib/plugins/entities.js",
+        "mineflayer/lib/plugins/game.js",
+        "mineflayer/lib/plugins/inventory.js",
+        "mineflayer/lib/plugins/packets26_1.js",
+        "mineflayer/lib/plugins/physics.js",
+        "mineflayer/lib/plugins/settings.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 51,
+      "identifier": "low_disk_space_warning",
+      "class": "ClientboundLowDiskSpaceWarningPacket",
+      "schemaName": "low_disk_space_warning",
+      "schemaType": "packet_low_disk_space_warning",
+      "source": "game/ClientboundLowDiskSpaceWarningPacket.java",
+      "sourceSha256": "cbc1540bc9b8162245062f1bf2cad9f6ab34d4c14b6e3200e5fb511023247922",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/packets26_1.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 52,
+      "identifier": "map_item_data",
+      "class": "ClientboundMapItemDataPacket",
+      "schemaName": "map",
+      "schemaType": "packet_map",
+      "source": "game/ClientboundMapItemDataPacket.java",
+      "sourceSha256": "1080acb5cfc6bcd841c82f246cedbdc5bbce659c4e3f3939c846216954735b1f",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 53,
+      "identifier": "merchant_offers",
+      "class": "ClientboundMerchantOffersPacket",
+      "schemaName": "trade_list",
+      "schemaType": "packet_trade_list",
+      "source": "game/ClientboundMerchantOffersPacket.java",
+      "sourceSha256": "6b3310b342151cee78821aa71606c645b99301cad874107720971c78975674df",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 54,
+      "identifier": "move_entity_pos",
+      "class": "ClientboundMoveEntityPacket.Pos",
+      "schemaName": "rel_entity_move",
+      "schemaType": "packet_rel_entity_move",
+      "source": "game/ClientboundMoveEntityPacket.java",
+      "sourceSha256": "8eaec189dd736119e71aef034d9d4d81c5851ffc662a2c836cd8309a7d0785aa",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 55,
+      "identifier": "move_entity_pos_rot",
+      "class": "ClientboundMoveEntityPacket.PosRot",
+      "schemaName": "entity_move_look",
+      "schemaType": "packet_entity_move_look",
+      "source": "game/ClientboundMoveEntityPacket.java",
+      "sourceSha256": "8eaec189dd736119e71aef034d9d4d81c5851ffc662a2c836cd8309a7d0785aa",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 56,
+      "identifier": "move_minecart_along_track",
+      "class": "ClientboundMoveMinecartPacket",
+      "schemaName": "move_minecart",
+      "schemaType": "packet_move_minecart",
+      "source": "game/ClientboundMoveMinecartPacket.java",
+      "sourceSha256": "f29ed237239f70a5d07fb1466a5447ef46703c3f9f013d14fd8f521981f9d089",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 57,
+      "identifier": "move_entity_rot",
+      "class": "ClientboundMoveEntityPacket.Rot",
+      "schemaName": "entity_look",
+      "schemaType": "packet_entity_look",
+      "source": "game/ClientboundMoveEntityPacket.java",
+      "sourceSha256": "8eaec189dd736119e71aef034d9d4d81c5851ffc662a2c836cd8309a7d0785aa",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 58,
+      "identifier": "move_vehicle",
+      "class": "ClientboundMoveVehiclePacket",
+      "schemaName": "vehicle_move",
+      "schemaType": "packet_vehicle_move",
+      "source": "game/ClientboundMoveVehiclePacket.java",
+      "sourceSha256": "edd2f782c7ab9cdd7ef6858126dfd3cc77017a27519bb77101fc7f306ccf2337",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 59,
+      "identifier": "open_book",
+      "class": "ClientboundOpenBookPacket",
+      "schemaName": "open_book",
+      "schemaType": "packet_open_book",
+      "source": "game/ClientboundOpenBookPacket.java",
+      "sourceSha256": "0e3ab36ea3de6616b606c1baa28f7f412d7904735849f2dfa0794f76ecad51fd",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 60,
+      "identifier": "open_screen",
+      "class": "ClientboundOpenScreenPacket",
+      "schemaName": "open_window",
+      "schemaType": "packet_open_window",
+      "source": "game/ClientboundOpenScreenPacket.java",
+      "sourceSha256": "fde1e09b49f5665b1bf09e55761008eb104f12da21f0cb9da687d2f665cc83fe",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/inventory.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 61,
+      "identifier": "open_sign_editor",
+      "class": "ClientboundOpenSignEditorPacket",
+      "schemaName": "open_sign_entity",
+      "schemaType": "packet_open_sign_entity",
+      "source": "game/ClientboundOpenSignEditorPacket.java",
+      "sourceSha256": "62ac266936cfe222a79131eb72c90c336623a8b04d4f4056efb51b001a8d0884",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 62,
+      "identifier": "ping",
+      "class": "ClientboundPingPacket",
+      "schemaName": "ping",
+      "schemaType": "packet_ping",
+      "source": "common/ClientboundPingPacket.java",
+      "sourceSha256": "11c85e0d25d8d33b046fca6c1dd3039c8bb1ea9b720f667eb284017b9b7c6740",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/game.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 63,
+      "identifier": "pong_response",
+      "class": "ClientboundPongResponsePacket",
+      "schemaName": "ping_response",
+      "schemaType": "packet_ping_response",
+      "source": "ping/ClientboundPongResponsePacket.java",
+      "sourceSha256": "72bf4fd6f6c5fa119f02345bd55a7207fdef8bac48ea127a04ffaba05ded07bf",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 64,
+      "identifier": "place_ghost_recipe",
+      "class": "ClientboundPlaceGhostRecipePacket",
+      "schemaName": "craft_recipe_response",
+      "schemaType": "packet_craft_recipe_response",
+      "source": "game/ClientboundPlaceGhostRecipePacket.java",
+      "sourceSha256": "910dc367f0afe9e31ae956063b497d9552e60afa2315fa85008ebed1e9e15ab1",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 65,
+      "identifier": "player_abilities",
+      "class": "ClientboundPlayerAbilitiesPacket",
+      "schemaName": "abilities",
+      "schemaType": "packet_abilities",
+      "source": "game/ClientboundPlayerAbilitiesPacket.java",
+      "sourceSha256": "57aaf71dafa7332b4fb9d20755aec0230e148a8968e68c0946ead2d137a64b12",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 66,
+      "identifier": "player_chat",
+      "class": "ClientboundPlayerChatPacket",
+      "schemaName": "player_chat",
+      "schemaType": "packet_player_chat",
+      "source": "game/ClientboundPlayerChatPacket.java",
+      "sourceSha256": "85c295a9699314107fd830469f19ec317d3c04d10aab5de03b0cd02af7c5ffde",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/chat.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 67,
+      "identifier": "player_combat_end",
+      "class": "ClientboundPlayerCombatEndPacket",
+      "schemaName": "end_combat_event",
+      "schemaType": "packet_end_combat_event",
+      "source": "game/ClientboundPlayerCombatEndPacket.java",
+      "sourceSha256": "df2b6f3d4872aa506a2b346194e69a84ca8dbd75025926a5a82bd796117d4780",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 68,
+      "identifier": "player_combat_enter",
+      "class": "ClientboundPlayerCombatEnterPacket",
+      "schemaName": "enter_combat_event",
+      "schemaType": "packet_enter_combat_event",
+      "source": "game/ClientboundPlayerCombatEnterPacket.java",
+      "sourceSha256": "8f950c0276d3aee523140f8ab24a01847b442539d2a433d30f2d69428938ca97",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 69,
+      "identifier": "player_combat_kill",
+      "class": "ClientboundPlayerCombatKillPacket",
+      "schemaName": "death_combat_event",
+      "schemaType": "packet_death_combat_event",
+      "source": "game/ClientboundPlayerCombatKillPacket.java",
+      "sourceSha256": "4d4d054e77eaddb2f7059b3a00e9eb88bdd36d4fe7b512a7bf1eb32ab7c0ce24",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 70,
+      "identifier": "player_info_remove",
+      "class": "ClientboundPlayerInfoRemovePacket",
+      "schemaName": "player_remove",
+      "schemaType": "packet_player_remove",
+      "source": "game/ClientboundPlayerInfoRemovePacket.java",
+      "sourceSha256": "3502d6c35e16ae9e2293ad12683720a29574fc10e0461d315b69d17b0455021d",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/chat.js",
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 71,
+      "identifier": "player_info_update",
+      "class": "ClientboundPlayerInfoUpdatePacket",
+      "schemaName": "player_info",
+      "schemaType": "packet_player_info",
+      "source": "game/ClientboundPlayerInfoUpdatePacket.java",
+      "sourceSha256": "0a0071b2ca30ef058b61c230c729fa70fddb5fdc2b75213b15587ba562641e6c",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/chat.js",
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 72,
+      "identifier": "player_look_at",
+      "class": "ClientboundPlayerLookAtPacket",
+      "schemaName": "face_player",
+      "schemaType": "packet_face_player",
+      "source": "game/ClientboundPlayerLookAtPacket.java",
+      "sourceSha256": "493a64e6c368a07f761404593f44978a09ce2988ecfee62eb2eb50a7c2a77365",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 73,
+      "identifier": "player_position",
+      "class": "ClientboundPlayerPositionPacket",
+      "schemaName": "position",
+      "schemaType": "packet_position",
+      "source": "game/ClientboundPlayerPositionPacket.java",
+      "sourceSha256": "9b98161473c8067ce227e1b0fc634594049fac9268b5e93efea654e231cde4fd",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/packets26_1.js",
+        "mineflayer/lib/plugins/physics.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 74,
+      "identifier": "player_rotation",
+      "class": "ClientboundPlayerRotationPacket",
+      "schemaName": "player_rotation",
+      "schemaType": "packet_player_rotation",
+      "source": "game/ClientboundPlayerRotationPacket.java",
+      "sourceSha256": "f834b270b23b67e3cab0dcefdad517581748da41a7e3ab7a9dc20c85aa940faf",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/physics.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 75,
+      "identifier": "recipe_book_add",
+      "class": "ClientboundRecipeBookAddPacket",
+      "schemaName": "recipe_book_add",
+      "schemaType": "packet_recipe_book_add",
+      "source": "game/ClientboundRecipeBookAddPacket.java",
+      "sourceSha256": "170e11a5a152db70f9e4de56286b0f03bcced411fafb52d2c6528debcdc221b1",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 76,
+      "identifier": "recipe_book_remove",
+      "class": "ClientboundRecipeBookRemovePacket",
+      "schemaName": "recipe_book_remove",
+      "schemaType": "packet_recipe_book_remove",
+      "source": "game/ClientboundRecipeBookRemovePacket.java",
+      "sourceSha256": "67e3f6a07b3ef94646c612ef6770f61b8be1ed0a56b5d23510f09913e352672b",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 77,
+      "identifier": "recipe_book_settings",
+      "class": "ClientboundRecipeBookSettingsPacket",
+      "schemaName": "recipe_book_settings",
+      "schemaType": "packet_recipe_book_settings",
+      "source": "game/ClientboundRecipeBookSettingsPacket.java",
+      "sourceSha256": "81cdafb6ebe74addb0c00437dafb4c0af378568875b0f4dbac1604215a23172c",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 78,
+      "identifier": "remove_entities",
+      "class": "ClientboundRemoveEntitiesPacket",
+      "schemaName": "entity_destroy",
+      "schemaType": "packet_entity_destroy",
+      "source": "game/ClientboundRemoveEntitiesPacket.java",
+      "sourceSha256": "9a18988ce817a2edd4796b06052580dc821184fbe453e01f0decaf529177131a",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js",
+        "mineflayer/lib/plugins/entities.js",
+        "mineflayer/lib/plugins/fishing.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 79,
+      "identifier": "remove_mob_effect",
+      "class": "ClientboundRemoveMobEffectPacket",
+      "schemaName": "remove_entity_effect",
+      "schemaType": "packet_remove_entity_effect",
+      "source": "game/ClientboundRemoveMobEffectPacket.java",
+      "sourceSha256": "d038edce7f2e08b7f4f472b4d9b63509b024e21716dee9fc5bb7d3692c63deee",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 80,
+      "identifier": "reset_score",
+      "class": "ClientboundResetScorePacket",
+      "schemaName": "reset_score",
+      "schemaType": "packet_reset_score",
+      "source": "game/ClientboundResetScorePacket.java",
+      "sourceSha256": "4f5e82b605294366e82f5904d870cb307e88f2d43d86351acdac2f74be40fc8f",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/scoreboard.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 81,
+      "identifier": "resource_pack_pop",
+      "class": "ClientboundResourcePackPopPacket",
+      "schemaName": "remove_resource_pack",
+      "schemaType": "packet_common_remove_resource_pack",
+      "source": "common/ClientboundResourcePackPopPacket.java",
+      "sourceSha256": "b16f9e789f4ecb1c260f895d754ae5d71ec59db3460dd9150887eea0434e9e02",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/resource_pack.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 82,
+      "identifier": "resource_pack_push",
+      "class": "ClientboundResourcePackPushPacket",
+      "schemaName": "add_resource_pack",
+      "schemaType": "packet_common_add_resource_pack",
+      "source": "common/ClientboundResourcePackPushPacket.java",
+      "sourceSha256": "56bb041f58098e1e2a8f90c14b4f00e9b358dfa9befc6b613b1589b3fcea6653",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/resource_pack.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 83,
+      "identifier": "post_effects",
+      "class": "ClientboundPostEffectsPacket",
+      "schemaName": "post_effects",
+      "schemaType": "packet_common_post_effects",
+      "source": "common/ClientboundPostEffectsPacket.java",
+      "sourceSha256": "9054f1a1b309ca20cec41f8fa33eed46ce3925295b2efa4d2429ebd625c007d1",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 84,
+      "identifier": "respawn",
+      "class": "ClientboundRespawnPacket",
+      "schemaName": "respawn",
+      "schemaType": "packet_respawn",
+      "source": "game/ClientboundRespawnPacket.java",
+      "sourceSha256": "196e647a21ad72441e663127a958d2194ed7e8efc9b74850f61bf614dea3f1ef",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js",
+        "mineflayer/lib/plugins/game.js",
+        "mineflayer/lib/plugins/health.js",
+        "mineflayer/lib/plugins/inventory.js",
+        "mineflayer/lib/plugins/packets26_1.js",
+        "mineflayer/lib/plugins/physics.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 85,
+      "identifier": "rotate_head",
+      "class": "ClientboundRotateHeadPacket",
+      "schemaName": "entity_head_rotation",
+      "schemaType": "packet_entity_head_rotation",
+      "source": "game/ClientboundRotateHeadPacket.java",
+      "sourceSha256": "68559fafb5f1658d5ef46eb1daf4d7921161f12b53d136fc57d10a5280c5364a",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 86,
+      "identifier": "section_blocks_update",
+      "class": "ClientboundSectionBlocksUpdatePacket",
+      "schemaName": "multi_block_change",
+      "schemaType": "packet_multi_block_change",
+      "source": "game/ClientboundSectionBlocksUpdatePacket.java",
+      "sourceSha256": "3ee6a3e1e1a27c9ba1caae2f16554682eb1db20f6dcfe59d0f469f135d770723",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/blocks.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 87,
+      "identifier": "select_advancements_tab",
+      "class": "ClientboundSelectAdvancementsTabPacket",
+      "schemaName": "select_advancement_tab",
+      "schemaType": "packet_select_advancement_tab",
+      "source": "game/ClientboundSelectAdvancementsTabPacket.java",
+      "sourceSha256": "b54491b050964126e2c40b7cdaab4e13c52dc240154292047842d7f8d9b893a9",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 88,
+      "identifier": "server_data",
+      "class": "ClientboundServerDataPacket",
+      "schemaName": "server_data",
+      "schemaType": "packet_server_data",
+      "source": "game/ClientboundServerDataPacket.java",
+      "sourceSha256": "d065403845a8304f8c5215c7464e9d9a0be8fa0f928656329af1f6815a808c4f",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/play.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 89,
+      "identifier": "set_action_bar_text",
+      "class": "ClientboundSetActionBarTextPacket",
+      "schemaName": "action_bar",
+      "schemaType": "packet_action_bar",
+      "source": "game/ClientboundSetActionBarTextPacket.java",
+      "sourceSha256": "589511cf3623b392b30ddf74e826f18aac63899aaf5c909213f07249e82be000",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 90,
+      "identifier": "set_border_center",
+      "class": "ClientboundSetBorderCenterPacket",
+      "schemaName": "world_border_center",
+      "schemaType": "packet_world_border_center",
+      "source": "game/ClientboundSetBorderCenterPacket.java",
+      "sourceSha256": "f886caa6d177f0698fa084c3a8fb6991c5623b2258eccbac571e95c37bbcf99e",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 91,
+      "identifier": "set_border_lerp_size",
+      "class": "ClientboundSetBorderLerpSizePacket",
+      "schemaName": "world_border_lerp_size",
+      "schemaType": "packet_world_border_lerp_size",
+      "source": "game/ClientboundSetBorderLerpSizePacket.java",
+      "sourceSha256": "3b1d2a3a842757fdeeb5877ad6e0ad4ebc7302317cc9e5a9aaa98f7baef619fd",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 92,
+      "identifier": "set_border_size",
+      "class": "ClientboundSetBorderSizePacket",
+      "schemaName": "world_border_size",
+      "schemaType": "packet_world_border_size",
+      "source": "game/ClientboundSetBorderSizePacket.java",
+      "sourceSha256": "5d01fb0607582777d4da5797a4005f628df4c60b65abd4d2cff0a06ae426793a",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 93,
+      "identifier": "set_border_warning_delay",
+      "class": "ClientboundSetBorderWarningDelayPacket",
+      "schemaName": "world_border_warning_delay",
+      "schemaType": "packet_world_border_warning_delay",
+      "source": "game/ClientboundSetBorderWarningDelayPacket.java",
+      "sourceSha256": "0e1aaec682fd95d2460ec64654234c9ddbc8b4e34064054ef141263553a95eda",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 94,
+      "identifier": "set_border_warning_distance",
+      "class": "ClientboundSetBorderWarningDistancePacket",
+      "schemaName": "world_border_warning_reach",
+      "schemaType": "packet_world_border_warning_reach",
+      "source": "game/ClientboundSetBorderWarningDistancePacket.java",
+      "sourceSha256": "de2e5a3b2a3c6e32bca48551a126d993f4c40cb9e8627ee86d7f32d5f7e69901",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 95,
+      "identifier": "set_camera",
+      "class": "ClientboundSetCameraPacket",
+      "schemaName": "camera",
+      "schemaType": "packet_camera",
+      "source": "game/ClientboundSetCameraPacket.java",
+      "sourceSha256": "ead963c971a9e87d826d7372067307f51e03355f487c64811dc38098ae95af5f",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 96,
+      "identifier": "set_chunk_cache_center",
+      "class": "ClientboundSetChunkCacheCenterPacket",
+      "schemaName": "update_view_position",
+      "schemaType": "packet_update_view_position",
+      "source": "game/ClientboundSetChunkCacheCenterPacket.java",
+      "sourceSha256": "d30c282a8895d5b089c6db68e141505f4faa450f43bf2c00228dc37b874df5f5",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 97,
+      "identifier": "set_chunk_cache_radius",
+      "class": "ClientboundSetChunkCacheRadiusPacket",
+      "schemaName": "update_view_distance",
+      "schemaType": "packet_update_view_distance",
+      "source": "game/ClientboundSetChunkCacheRadiusPacket.java",
+      "sourceSha256": "6caea26da3f8678547dc824c70db92302d98fb80e70163a5e9f0af120ae67285",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 98,
+      "identifier": "set_cursor_item",
+      "class": "ClientboundSetCursorItemPacket",
+      "schemaName": "set_cursor_item",
+      "schemaType": "packet_set_cursor_item",
+      "source": "game/ClientboundSetCursorItemPacket.java",
+      "sourceSha256": "604e007fa0dc143fc5a86fde3562262131a58ebf24895df99e45fcef49a6aa2f",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 99,
+      "identifier": "set_default_spawn_position",
+      "class": "ClientboundSetDefaultSpawnPositionPacket",
+      "schemaName": "spawn_position",
+      "schemaType": "packet_spawn_position",
+      "source": "game/ClientboundSetDefaultSpawnPositionPacket.java",
+      "sourceSha256": "2a566c573d12e0f1b4157ce93e0724e7713daa033363d49e742bf23d4c12e237",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/spawn_point.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 100,
+      "identifier": "set_display_objective",
+      "class": "ClientboundSetDisplayObjectivePacket",
+      "schemaName": "scoreboard_display_objective",
+      "schemaType": "packet_scoreboard_display_objective",
+      "source": "game/ClientboundSetDisplayObjectivePacket.java",
+      "sourceSha256": "1a86b47619ce4fd9f1af72b54b56ddcd00938535dccd80d07948759199092b1a",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 101,
+      "identifier": "set_entity_data",
+      "class": "ClientboundSetEntityDataPacket",
+      "schemaName": "entity_metadata",
+      "schemaType": "packet_entity_metadata",
+      "source": "game/ClientboundSetEntityDataPacket.java",
+      "sourceSha256": "e4aea80639c4aad0b6f801edeef2f9cc2a9c50bc9aa19d9e8503fdfffb84c6d0",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/breath.js",
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 102,
+      "identifier": "set_entity_link",
+      "class": "ClientboundSetEntityLinkPacket",
+      "schemaName": "attach_entity",
+      "schemaType": "packet_attach_entity",
+      "source": "game/ClientboundSetEntityLinkPacket.java",
+      "sourceSha256": "b9ae932e96826cc856aeb1c6c24ef22c3dd40b0c2e6e7fb87c9a604bb77be1f3",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 103,
+      "identifier": "set_entity_motion",
+      "class": "ClientboundSetEntityMotionPacket",
+      "schemaName": "entity_velocity",
+      "schemaType": "packet_entity_velocity",
+      "source": "game/ClientboundSetEntityMotionPacket.java",
+      "sourceSha256": "8a38ccb2fd0b959030190007a29ea64203f358cac61447e76bae5db1c119e54b",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 104,
+      "identifier": "set_equipment",
+      "class": "ClientboundSetEquipmentPacket",
+      "schemaName": "entity_equipment",
+      "schemaType": "packet_entity_equipment",
+      "source": "game/ClientboundSetEquipmentPacket.java",
+      "sourceSha256": "3b2887e84f1cddfc17eeba95481d84fc6366923c1b4574a9e27bf2210d558d13",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 105,
+      "identifier": "set_experience",
+      "class": "ClientboundSetExperiencePacket",
+      "schemaName": "experience",
+      "schemaType": "packet_experience",
+      "source": "game/ClientboundSetExperiencePacket.java",
+      "sourceSha256": "56eca65fe07b6195f71bd2852984d65ff2736208cf65e98db7ac58c83e847565",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/experience.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 106,
+      "identifier": "set_health",
+      "class": "ClientboundSetHealthPacket",
+      "schemaName": "update_health",
+      "schemaType": "packet_update_health",
+      "source": "game/ClientboundSetHealthPacket.java",
+      "sourceSha256": "c426474b7eef29e56ba28fc1f807a5378ec686cff5fcf6a436a197f512d51837",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/health.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 107,
+      "identifier": "set_held_slot",
+      "class": "ClientboundSetHeldSlotPacket",
+      "schemaName": "held_item_slot",
+      "schemaType": "packet_held_item_slot",
+      "source": "game/ClientboundSetHeldSlotPacket.java",
+      "sourceSha256": "d03390760e58400c712a9159b09f181517f94bff268e7f50b7e0050978f0923e",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/inventory.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 108,
+      "identifier": "set_objective",
+      "class": "ClientboundSetObjectivePacket",
+      "schemaName": "scoreboard_objective",
+      "schemaType": "packet_scoreboard_objective",
+      "source": "game/ClientboundSetObjectivePacket.java",
+      "sourceSha256": "fea6635b696f194703f0b3200234811c587cab18ff9618ad0e30752e2afb097f",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 109,
+      "identifier": "set_passengers",
+      "class": "ClientboundSetPassengersPacket",
+      "schemaName": "set_passengers",
+      "schemaType": "packet_set_passengers",
+      "source": "game/ClientboundSetPassengersPacket.java",
+      "sourceSha256": "cc0303df87b9293517368d8532131573e7cf99640d580aeb517a3da874cdb67e",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 110,
+      "identifier": "set_player_inventory",
+      "class": "ClientboundSetPlayerInventoryPacket",
+      "schemaName": "set_player_inventory",
+      "schemaType": "packet_set_player_inventory",
+      "source": "game/ClientboundSetPlayerInventoryPacket.java",
+      "sourceSha256": "f5c674668c01804f01c2f1e274fd5eadb7b2f75b3f2ebd1cccdc8540f2d76213",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/inventory.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 111,
+      "identifier": "set_player_team",
+      "class": "ClientboundSetPlayerTeamPacket",
+      "schemaName": "teams",
+      "schemaType": "packet_teams",
+      "source": "game/ClientboundSetPlayerTeamPacket.java",
+      "sourceSha256": "918932fc5d1912f460d525da3a04c52feaa1b54e779b97386bf6091f59144e8f",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/team.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 112,
+      "identifier": "set_score",
+      "class": "ClientboundSetScorePacket",
+      "schemaName": "scoreboard_score",
+      "schemaType": "packet_scoreboard_score",
+      "source": "game/ClientboundSetScorePacket.java",
+      "sourceSha256": "9ceb0fac3a6cc0c661b389f3bacc56883773e4783ff74ea5c12f937214077065",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 113,
+      "identifier": "set_simulation_distance",
+      "class": "ClientboundSetSimulationDistancePacket",
+      "schemaName": "simulation_distance",
+      "schemaType": "packet_simulation_distance",
+      "source": "game/ClientboundSetSimulationDistancePacket.java",
+      "sourceSha256": "ef973ce69d1eb2703a46a7fe75f0936a6f1817c73f0a4b98f64a9ea4b2c0aaa4",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 114,
+      "identifier": "set_subtitle_text",
+      "class": "ClientboundSetSubtitleTextPacket",
+      "schemaName": "set_title_subtitle",
+      "schemaType": "packet_set_title_subtitle",
+      "source": "game/ClientboundSetSubtitleTextPacket.java",
+      "sourceSha256": "e787ed7a252f54753baf8fcb3ce1fd6807613c24e808019bd85cbaf4d0aa7ec5",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/title.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 115,
+      "identifier": "set_time",
+      "class": "ClientboundSetTimePacket",
+      "schemaName": "update_time",
+      "schemaType": "packet_update_time",
+      "source": "game/ClientboundSetTimePacket.java",
+      "sourceSha256": "a423b564f7242028f60d17a09da5b4bc1e2a5db19ec4d39a4fb98951762e9c8f",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/time.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 116,
+      "identifier": "set_title_text",
+      "class": "ClientboundSetTitleTextPacket",
+      "schemaName": "set_title_text",
+      "schemaType": "packet_set_title_text",
+      "source": "game/ClientboundSetTitleTextPacket.java",
+      "sourceSha256": "c6634f6f003dc1f5d03609e4bd8f5223949cdc23f76365831fdaa1e5b38f41f2",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/title.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 117,
+      "identifier": "set_titles_animation",
+      "class": "ClientboundSetTitlesAnimationPacket",
+      "schemaName": "set_title_time",
+      "schemaType": "packet_set_title_time",
+      "source": "game/ClientboundSetTitlesAnimationPacket.java",
+      "sourceSha256": "c6a85ef7256a414cfa246da7072f82e3e615684f74ff0a6f28e44b92e85a145d",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/title.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 118,
+      "identifier": "sound_entity",
+      "class": "ClientboundSoundEntityPacket",
+      "schemaName": "entity_sound_effect",
+      "schemaType": "packet_entity_sound_effect",
+      "source": "game/ClientboundSoundEntityPacket.java",
+      "sourceSha256": "27a03cf8759881ee6a5aa68a5e91ee7605d0e8ccfc08692316bd49a08ab38fda",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 119,
+      "identifier": "sound",
+      "class": "ClientboundSoundPacket",
+      "schemaName": "sound_effect",
+      "schemaType": "packet_sound_effect",
+      "source": "game/ClientboundSoundPacket.java",
+      "sourceSha256": "7366edfda4e7bd1e2cd85d04d82be56788d7d6a677deadfb090834b6784e4c73",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/sound.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 120,
+      "identifier": "start_configuration",
+      "class": "ClientboundStartConfigurationPacket",
+      "schemaName": "start_configuration",
+      "schemaType": "packet_start_configuration",
+      "source": "game/ClientboundStartConfigurationPacket.java",
+      "sourceSha256": "5c88141da9de0b13615ea8cb389a8d5365f5987231784233e4b0b201af47a13e",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/play.js",
+        "mineflayer/lib/plugins/inventory.js",
+        "mineflayer/lib/plugins/packets26_1.js",
+        "mineflayer/lib/plugins/physics.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 121,
+      "identifier": "stop_sound",
+      "class": "ClientboundStopSoundPacket",
+      "schemaName": "stop_sound",
+      "schemaType": "packet_stop_sound",
+      "source": "game/ClientboundStopSoundPacket.java",
+      "sourceSha256": "287df96fa3562d25fa9e9efe70c875f7d5f26c3da9850cebb645f9006a6d28b3",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 122,
+      "identifier": "store_cookie",
+      "class": "ClientboundStoreCookiePacket",
+      "schemaName": "store_cookie",
+      "schemaType": "packet_common_store_cookie",
+      "source": "common/ClientboundStoreCookiePacket.java",
+      "sourceSha256": "56bbb41c04be170fd9a2a9b8ac666b1bbf1e810332675a4976ba177d7db6ac06",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 123,
+      "identifier": "swing_animation",
+      "class": "ClientboundSwingAnimationPacket",
+      "schemaName": "swing_animation",
+      "schemaType": "packet_swing_animation",
+      "source": "game/ClientboundSwingAnimationPacket.java",
+      "sourceSha256": "3e2d5bba765379a975cdc444bffd90d3a387fd0b9ccd09de24f9cf0cc8194de8",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 124,
+      "identifier": "system_chat",
+      "class": "ClientboundSystemChatPacket",
+      "schemaName": "system_chat",
+      "schemaType": "packet_system_chat",
+      "source": "game/ClientboundSystemChatPacket.java",
+      "sourceSha256": "05c7d61f82378c88d0dcbcb3042009958ee88d3df06a43f38a637f8cf5d6b9b1",
+      "handlerFiles": [
+        "node-minecraft-protocol/src/client/chat.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 125,
+      "identifier": "tab_list",
+      "class": "ClientboundTabListPacket",
+      "schemaName": "playerlist_header",
+      "schemaType": "packet_playerlist_header",
+      "source": "game/ClientboundTabListPacket.java",
+      "sourceSha256": "69eb895fdf5fcfbb549137627ed420684b34d9868c111d00140f107dba243575",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/tablist.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 126,
+      "identifier": "tag_query",
+      "class": "ClientboundTagQueryPacket",
+      "schemaName": "nbt_query_response",
+      "schemaType": "packet_nbt_query_response",
+      "source": "game/ClientboundTagQueryPacket.java",
+      "sourceSha256": "14efa20772090380b30182bbff957bbdb96c5f9122abbf96a8a27f7830192ea6",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 127,
+      "identifier": "take_item_entity",
+      "class": "ClientboundTakeItemEntityPacket",
+      "schemaName": "collect",
+      "schemaType": "packet_collect",
+      "source": "game/ClientboundTakeItemEntityPacket.java",
+      "sourceSha256": "cb5349a0167f3dce0aa3ea8728f145f45bc0158953816e2cb98438bde4e8b803",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 128,
+      "identifier": "teleport_entity",
+      "class": "ClientboundTeleportEntityPacket",
+      "schemaName": "entity_teleport",
+      "schemaType": "packet_entity_teleport",
+      "source": "game/ClientboundTeleportEntityPacket.java",
+      "sourceSha256": "f91c33274cf661ccc3c5f4ba463d4ca985cdc87de246a965eb9bf327fb63f076",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 129,
+      "identifier": "test_instance_block_status",
+      "class": "ClientboundTestInstanceBlockStatus",
+      "schemaName": "test_instance_block_status",
+      "schemaType": "packet_test_instance_block_status",
+      "source": "game/ClientboundTestInstanceBlockStatus.java",
+      "sourceSha256": "805472bb69f5a97708f9675f45a4fb7583601a1b091e7d8f14f3bc078f65be8a",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 130,
+      "identifier": "ticking_state",
+      "class": "ClientboundTickingStatePacket",
+      "schemaName": "set_ticking_state",
+      "schemaType": "packet_set_ticking_state",
+      "source": "game/ClientboundTickingStatePacket.java",
+      "sourceSha256": "019c4419a689e0ec16d58fba6aecbb116800a6c42a5971abc2cac87148628dea",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 131,
+      "identifier": "ticking_step",
+      "class": "ClientboundTickingStepPacket",
+      "schemaName": "step_tick",
+      "schemaType": "packet_step_tick",
+      "source": "game/ClientboundTickingStepPacket.java",
+      "sourceSha256": "da1e642c070462529728ef20b465872cc03a6041e7d878039c158f9407d6ce3a",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 132,
+      "identifier": "transfer",
+      "class": "ClientboundTransferPacket",
+      "schemaName": "transfer",
+      "schemaType": "packet_common_transfer",
+      "source": "common/ClientboundTransferPacket.java",
+      "sourceSha256": "4432f39bec630ea047ab077e9c8bd8d9fd67ed5c8209f740fa2ff0ff245419dc",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 133,
+      "identifier": "update_advancements",
+      "class": "ClientboundUpdateAdvancementsPacket",
+      "schemaName": "advancements",
+      "schemaType": "packet_advancements",
+      "source": "game/ClientboundUpdateAdvancementsPacket.java",
+      "sourceSha256": "a2af6795ed93c1ead36e34c78246de492cde8288ee0ec789cc57a87943ae6f38",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 134,
+      "identifier": "update_attributes",
+      "class": "ClientboundUpdateAttributesPacket",
+      "schemaName": "entity_update_attributes",
+      "schemaType": "packet_entity_update_attributes",
+      "source": "game/ClientboundUpdateAttributesPacket.java",
+      "sourceSha256": "ed2cc388d6001fca2392113aaa7b9c21b328f328dfe10744fbfa94fdc6e576e2",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 135,
+      "identifier": "update_mob_effect",
+      "class": "ClientboundUpdateMobEffectPacket",
+      "schemaName": "entity_effect",
+      "schemaType": "packet_entity_effect",
+      "source": "game/ClientboundUpdateMobEffectPacket.java",
+      "sourceSha256": "edf9aff1d8b944afb30a77a66a77d2c97eaf511472872a521095eedbdbf688bf",
+      "handlerFiles": [
+        "mineflayer/lib/plugins/entities.js"
+      ],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 136,
+      "identifier": "update_recipes",
+      "class": "ClientboundUpdateRecipesPacket",
+      "schemaName": "declare_recipes",
+      "schemaType": "packet_declare_recipes",
+      "source": "game/ClientboundUpdateRecipesPacket.java",
+      "sourceSha256": "425f7ac5ca9fb3bf4edd83469e7040b5de2c40cd1067087d32c18601f6ae6dc5",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 137,
+      "identifier": "update_tags",
+      "class": "ClientboundUpdateTagsPacket",
+      "schemaName": "tags",
+      "schemaType": "packet_tags",
+      "source": "common/ClientboundUpdateTagsPacket.java",
+      "sourceSha256": "005fdf3febf66c5bee3e399513355a076f77d1ac5575ebf29ae917237fa038d8",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 138,
+      "identifier": "projectile_power",
+      "class": "ClientboundProjectilePowerPacket",
+      "schemaName": "set_projectile_power",
+      "schemaType": "packet_set_projectile_power",
+      "source": "game/ClientboundProjectilePowerPacket.java",
+      "sourceSha256": "dac5380771cafa399cb89749ea2b1e6cef905f90088d206e0ba25eca4fa067c0",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 139,
+      "identifier": "custom_report_details",
+      "class": "ClientboundCustomReportDetailsPacket",
+      "schemaName": "custom_report_details",
+      "schemaType": "packet_common_custom_report_details",
+      "source": "common/ClientboundCustomReportDetailsPacket.java",
+      "sourceSha256": "7556f6312f5d035562f4d9f019cebef210ccb2af303e83f43530a1955065925d",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 140,
+      "identifier": "server_links",
+      "class": "ClientboundServerLinksPacket",
+      "schemaName": "server_links",
+      "schemaType": "packet_common_server_links",
+      "source": "common/ClientboundServerLinksPacket.java",
+      "sourceSha256": "a257e47fca2b21c2968705722b1a89b7936b1667e1d4f1e18d906739e55c3b53",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 141,
+      "identifier": "waypoint",
+      "class": "ClientboundTrackedWaypointPacket",
+      "schemaName": "tracked_waypoint",
+      "schemaType": "packet_tracked_waypoint",
+      "source": "game/ClientboundTrackedWaypointPacket.java",
+      "sourceSha256": "d70b54523dc54e9233f9dd93635193497f5524e225784f8e6714548df6a396ed",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 142,
+      "identifier": "clear_dialog",
+      "class": "ClientboundClearDialogPacket",
+      "schemaName": "clear_dialog",
+      "schemaType": "packet_common_clear_dialog",
+      "source": "common/ClientboundClearDialogPacket.java",
+      "sourceSha256": "0571c00f7eafef0963baba9868a425d6426942cd67d770cc73565bdc9ca6bdf4",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    },
+    {
+      "state": "play",
+      "direction": "toClient",
+      "id": 143,
+      "identifier": "show_dialog",
+      "class": "ClientboundShowDialogPacket",
+      "schemaName": "show_dialog",
+      "schemaType": "packet_show_dialog",
+      "source": "common/ClientboundShowDialogPacket.java",
+      "sourceSha256": "101bbc8a34250be700955c24a7ec4bb06d8049cb09ffd4436d853f52008f4401",
+      "handlerFiles": [],
+      "verification": "registration-inventory-only"
+    }
+  ]
+}

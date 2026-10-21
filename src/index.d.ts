@@ -50,6 +50,8 @@ declare module 'minecraft-protocol' {
 		customPackets: any
 		protocolVersion: number
 		version: string
+		/** Per-connection cookies, cleared on end. Payloads are limited to 5120 bytes. */
+		cookies: Map<string, Buffer>
 		write(name: string, params: any): void
 		writePriority(name: string, params: any): void
 		/** Local queue or stream pressure; false does not imply delivery to the server. */
@@ -76,6 +78,8 @@ declare module 'minecraft-protocol' {
 		on(event: 'state', handler: (newState: States, oldState: States) => PromiseLike): this
 		on(event: 'end', handler: (reason: string) => PromiseLike): this
 		on(event: 'connect', handler: () => PromiseLike): this
+		/** Notification only; does not disconnect or open the requested destination. */
+		on(event: 'transferRequested', handler: (request: { host: string; port: number; cookies: Map<string, Buffer> }) => PromiseLike): this
 		on(event: 'keepAliveWarning', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this
 		on(event: 'keepAliveRecovered', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this
 		on(event: 'keepAliveTimeout', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this
@@ -105,6 +109,7 @@ declare module 'minecraft-protocol' {
 		once(event: 'state', handler: (newState: States, oldState: States) => PromiseLike): this
 		once(event: 'end', handler: (reasonce: string) => PromiseLike): this
 		once(event: 'connect', handler: () => PromiseLike): this
+		once(event: 'transferRequested', handler: (request: { host: string; port: number; cookies: Map<string, Buffer> }) => PromiseLike): this
 		once(event: string, handler: (data: any, packetMeta: PacketMeta) => PromiseLike): this
 		once(event: `raw.${string}`, handler: (buffer: Buffer, packetMeta: PacketMeta) => PromiseLike): this
 	}
@@ -155,6 +160,10 @@ declare module 'minecraft-protocol' {
 
 	export interface ClientOptions {
 		username: string
+		/** Brand sent during initial configuration (1.20.2+). Defaults to minecraft-protocol. */
+		brand?: string
+		/** Explicit cookie handoff; copied on creation and never written back to this map. */
+		cookies?: ReadonlyMap<string, Buffer>
 		port?: number
 		auth?: 'mojang' | 'microsoft' | 'offline' | ((client: Client, options: ClientOptions) => void)
 		password?: string

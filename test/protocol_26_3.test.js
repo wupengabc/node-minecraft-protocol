@@ -286,7 +286,7 @@ describe('protocol 26.3 (777)', function () {
     assert.strictEqual(sp.metadata.size, sb.length)
     assert.strictEqual(sp.data.params.delta.steps.length, 2)
     assert.strictEqual(sp.data.params.delta.steps[1].ticks, 3)
-    assert.strictEqual(sp.data.params.delta.dX, 0.5)
+    assert.strictEqual(sp.data.params.delta.dX, 0.75)
   })
 
   it('decodes a captured 26.3 entity move packet sent with VecDelta', function () {

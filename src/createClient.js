@@ -10,6 +10,7 @@ const auth = require('./client/mojangAuth')
 const microsoftAuth = require('./client/microsoftAuth')
 const setProtocol = require('./client/setProtocol')
 const play = require('./client/play')
+const cookie = require('./client/cookie')
 const tcpDns = require('./client/tcp_dns')
 const autoVersion = require('./client/autoVersion')
 const pluginChannels = require('./client/pluginChannels')
@@ -53,6 +54,7 @@ function createClient (options) {
   const Client = options.Client || DefaultClientImpl
 
   const client = new Client(false, version.minecraftVersion, options.customPackets, hideErrors)
+  cookie(client, options)
 
   tcpDns(client, options)
 
