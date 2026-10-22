@@ -1,6 +1,6 @@
 {
   "name": "@wp2508/minecraft-protocol",
-  "version": "1.69.4",
+  "version": "1.69.5",
   "description": "Parse and serialize minecraft packets, plus authentication and encryption.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
@@ -51,7 +51,7 @@
     "minecraft-wrap": "^1.2.3",
     "mocha": "^11.0.1",
     "power-assert": "^1.0.0",
-    "prismarine-registry": "^1.8.0",
+    "prismarine-registry": "npm:@wp2508/prismarine-registry@^1.12.1",
     "standard": "^17.0.0"
   },
   "dependencies": {
@@ -67,7 +67,7 @@
     "node-fetch": "^2.6.1",
     "node-rsa": "^0.4.2",
     "prismarine-auth": "^3.1.1",
-    "prismarine-chat": "npm:@wp2508/prismarine-chat@1.13.2",
+    "prismarine-chat": "npm:@wp2508/prismarine-chat@1.13.4",
     "prismarine-nbt": "^2.5.0",
     "prismarine-realms": "^1.2.0",
     "protodef": "npm:@wp2508/protodef@1.19.2",
