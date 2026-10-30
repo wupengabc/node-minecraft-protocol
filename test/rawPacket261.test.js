@@ -133,7 +133,7 @@ describe('rawPacket emission for unknown packet IDs (protocol 775)', function ()
     client.deserializer.write(buf)
   })
 
-  it('keeps malformed 26.1 play packets as parse errors with their raw frame', function (done) {
+  it('reports malformed 26.1 play packets with their raw frame', function (done) {
     client.state = states.PLAY
 
     const invalidWindowPacket = Buffer.from([0x14])
@@ -141,25 +141,17 @@ describe('rawPacket emission for unknown packet IDs (protocol 775)', function ()
     parseError.buffer = invalidWindowPacket
     parseError.field = 'packet.params.items'
 
-    client.once('rawPacket', () => done(new Error('malformed known packets must not be skipped')))
-    client.once('error', (err) => {
-      assert.strictEqual(err.packetId, 0x14)
-      assert.strictEqual(err.packetBuffer, invalidWindowPacket)
-      assert.strictEqual(err.packetHex, invalidWindowPacket.toString('hex'))
-      assert.match(err.message, /^Parse error for play\.toClient(?:\.[^(]+)? \(packet 0x14/)
+    client.once('malformedPacket', (packet) => {
+      assert.strictEqual(packet.packetId, 0x14)
+      assert.strictEqual(packet.buffer, invalidWindowPacket)
+      assert.match(packet.error.message, /packet 0x14/)
+      assert.match(packet.error.message, /array size is abnormally large/)
       done()
     })
     client.deserializer.emit('error', parseError)
   })
 
-  // teams (0x6d) was previously special-cased as "known to be malformed on
-  // 26.1/26.2" and silently skipped. That premise was wrong: both versions'
-  // packet_teams schemas match the decompiled
-  // ClientboundSetPlayerTeamPacket.Parameters exactly (they just order fields
-  // differently from each other, which produces silent garbage rather than an
-  // error). So a genuine 0x6d parse error must be reported like any other
-  // malformed known packet.
-  it('reports a malformed teams packet as an error instead of skipping it', function (done) {
+  it('reports a malformed teams packet without a global client error', function (done) {
     client.state = states.PLAY
 
     const malformedTeamsPacket = Buffer.from('6d074c', 'hex')
@@ -167,11 +159,10 @@ describe('rawPacket emission for unknown packet IDs (protocol 775)', function ()
     parseError.buffer = malformedTeamsPacket
     parseError.field = 'packet.params.name'
 
-    client.once('rawPacket', () => done(new Error('malformed known packets must not be skipped')))
-    client.once('error', (err) => {
-      assert.strictEqual(err.packetId, 0x6d)
-      assert.strictEqual(err.packetBuffer, malformedTeamsPacket)
-      assert.match(err.message, /\(packet 0x6d/)
+    client.once('malformedPacket', (packet) => {
+      assert.strictEqual(packet.packetId, 0x6d)
+      assert.strictEqual(packet.buffer, malformedTeamsPacket)
+      assert.match(packet.error.message, /packet 0x6d/)
       done()
     })
     client.deserializer.emit('error', parseError)

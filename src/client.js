@@ -181,17 +181,17 @@ class Client extends EventEmitter {
       const deserializerDirection = this.isServer ? 'toServer' : 'toClient'
       e.field = [this.protocolState, deserializerDirection].concat(parts).join('.')
 
-      // For protocols 775/776 (26.1/26.2), an unmapped packet ID is safe to expose as a
-      // raw packet: no payload schema exists to decode. A malformed known packet
-      // must remain an error rather than being skipped, otherwise the client
-      // silently desynchronizes from the server.
+      // An unmapped or malformed framed packet can be isolated and skipped: the
+      // splitter already consumed its exact frame, so later packets stay aligned.
       const isUnknownPacket = e.message && e.message.includes('is not in the mappings value')
-      if (e.buffer) {
-        let packetId
+      if (e.buffer && (!isUnknownPacket || this.protocolVersion >= 775)) {
+        let packetId = e.packetId
         try {
-          const result = readVarInt(e.buffer, 0)
-          packetId = result.value
-          e.packetId = packetId
+          if (packetId === undefined) {
+            const result = readVarInt(e.buffer, 0)
+            packetId = result.value
+            e.packetId = packetId
+          }
         } catch (_) {
           packetId = undefined
         }
@@ -200,33 +200,34 @@ class Client extends EventEmitter {
         e.packetBuffer = e.buffer
         e.packetHex = e.buffer.toString('hex')
         if (process.env.MINECRAFT_PROTOCOL_ERROR_DUMP) {
-          require('fs').writeFileSync(process.env.MINECRAFT_PROTOCOL_ERROR_DUMP, e.buffer)
+          try {
+            require('fs').writeFileSync(process.env.MINECRAFT_PROTOCOL_ERROR_DUMP, e.buffer)
+          } catch (dumpError) {
+            if (!this.hideErrors) console.error('Failed to write malformed packet dump:', dumpError)
+          }
         }
       }
-      // An unmapped packet ID is safe to expose as a raw packet: there is no
-      // payload schema to decode, so nothing can be desynchronized by skipping
-      // it. A malformed KNOWN packet is different -- it means our schema and the
-      // server disagree, which must surface as an error.
-      //
-      // teams (0x6d) used to be special-cased here as "known to be malformed on
-      // 26.1/26.2". That was wrong. The 26.1 and 26.2 packet_teams schemas were
-      // both verified field-by-field against the decompiled
-      // ClientboundSetPlayerTeamPacket.Parameters and are correct; they merely
-      // order their fields differently between the two versions. Parsing a
-      // frame with the wrong version's schema does not raise an error at all --
-      // it silently decodes garbage and under-consumes the buffer. So a real
-      // 0x6d parse error is a genuine signal and swallowing it only hid
-      // problems. See test/protocol_26_2.test.js for the field-order pins.
-      if (this.protocolVersion >= 775 && isUnknownPacket && e.buffer) {
-        this.emit('rawPacket', {
+      if (e.buffer && (!isUnknownPacket || this.protocolVersion >= 775)) {
+        const payload = {
           buffer: e.buffer,
           state: this.protocolState,
           protocolVersion: this.protocolVersion,
-          packetId: e.packetId
-        })
-        // protodef destroyed this parser when it reported the error. Replace it
-        // so the next packet can still be consumed.
-        this._rebuildDeserializer()
+          packetId: e.packetId,
+          error: isUnknownPacket ? undefined : e
+        }
+        if (payload.error && !payload.error.message.includes('[packet 0x')) {
+          payload.error.message = `[packet 0x${payload.packetId?.toString(16) ?? 'unknown'} | ${payload.buffer.length} bytes] ${payload.error.message}`
+        }
+        try {
+          this.emit(isUnknownPacket ? 'rawPacket' : 'malformedPacket', payload)
+        } catch (listenerError) {
+          if (!this.hideErrors) console.error('Uncaught error in malformed packet listener:', listenerError)
+        } finally {
+          // The framed payload is isolated and discarded. Rebuild because
+          // protodef destroys its parser for hard errors and may leave partial
+          // bundle state behind.
+          this._rebuildDeserializer()
+        }
         return
       }
 
@@ -239,6 +240,8 @@ class Client extends EventEmitter {
         : `(protocol ${this.protocolVersion}, no framed payload attached)`
       e.message = `Parse error for ${e.field} ${packetInfo} : ${e.message}`
       this._rebuildDeserializer()
+      // Without a framed payload there is no safe way to identify the corrupt
+      // bytes and resume parsing, so retain the fatal connection error path.
       this.emit('error', e)
     })
     const emitPacket = (parsed) => {

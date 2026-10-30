@@ -80,6 +80,7 @@ declare module 'minecraft-protocol' {
 		on(event: 'connect', handler: () => PromiseLike): this
 		/** Notification only; does not disconnect or open the requested destination. */
 		on(event: 'transferRequested', handler: (request: { host: string; port: number; cookies: Map<string, Buffer> }) => PromiseLike): this
+		on(event: 'malformedPacket', handler: (packet: { buffer: Buffer; state: States; protocolVersion: number; packetId?: number; error: Error }) => PromiseLike): this
 		on(event: 'keepAliveWarning', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this
 		on(event: 'keepAliveRecovered', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this
 		on(event: 'keepAliveTimeout', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this
@@ -110,6 +111,7 @@ declare module 'minecraft-protocol' {
 		once(event: 'end', handler: (reasonce: string) => PromiseLike): this
 		once(event: 'connect', handler: () => PromiseLike): this
 		once(event: 'transferRequested', handler: (request: { host: string; port: number; cookies: Map<string, Buffer> }) => PromiseLike): this
+		once(event: 'malformedPacket', handler: (packet: { buffer: Buffer; state: States; protocolVersion: number; packetId?: number; error: Error }) => PromiseLike): this
 		once(event: string, handler: (data: any, packetMeta: PacketMeta) => PromiseLike): this
 		once(event: `raw.${string}`, handler: (buffer: Buffer, packetMeta: PacketMeta) => PromiseLike): this
 	}

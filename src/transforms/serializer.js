@@ -23,19 +23,20 @@ class DiagnosticFullPacketParser extends FullPacketParser {
       // extract the packet id. Also bake the packet id directly into the error
       // message so it survives any downstream reformatting.
       let packetId
+      const packetBuffer = Buffer.isBuffer(e.buffer) ? e.buffer : chunk
       try {
-        const { value: id, size: idSize } = readVarInt(chunk, 0)
-        packetId = id
-        e.packetId = id
-        e.packetHex = chunk.slice(0, Math.min(chunk.length, idSize + 8)).toString('hex')
+        const { value: id, size: idSize } = readVarInt(packetBuffer, 0)
+        if (e.packetId === undefined) e.packetId = id
+        packetId = e.packetId
+        e.packetHex = packetBuffer.slice(0, Math.min(packetBuffer.length, idSize + 8)).toString('hex')
       } catch (_) {
         packetId = undefined
       }
-      e.buffer = chunk
-      e.packetBuffer = chunk
+      e.buffer = packetBuffer
+      e.packetBuffer = packetBuffer
       const tag = packetId !== undefined ? `packet 0x${packetId.toString(16)}` : 'unknown packet'
       if (!e.message) e.message = ''
-      e.message = `[${tag} | ${chunk.length} bytes] ${e.message}`
+      e.message = `[${tag} | ${packetBuffer.length} bytes] ${e.message}`
       if (e.partialReadError) {
         if (!this.noErrorLogging) {
           console.log(e.stack)

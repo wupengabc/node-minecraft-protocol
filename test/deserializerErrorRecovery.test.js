@@ -16,16 +16,9 @@ const Client = require('../src/client')
 //   * PartialReadError  -> cb()      : the Transform SURVIVES.
 //   * any other Error   -> cb(err)   : Node DESTROYS the Transform.
 //
-// The second kind is what a malformed *known* packet produces (the reason the
-// `isMalformedTeamPacket` special case exists at all). The old recovery path
-// responded by re-piping the upstream into that already-destroyed deserializer.
-// A destroyed destination can never accept data again, so the upstream's
-// readable buffer fills, backpressure cascades up the chain, and pipe() calls
-// socket.pause() -- permanently killing 'data' events with no error, no close
-// and no EOF. That is exactly the production signature.
-//
-// For protocols 775/776 the recovery branch returns *without* emitting 'error',
-// which is why production logged silence rather than a parse error.
+// Framed errors are recoverable because the splitter has already isolated the
+// entire packet. The client reports its contents as malformedPacket and swaps
+// the destroyed parser without disconnecting the socket.
 function makeFakeSocket () {
   const socket = new PassThrough()
   socket.setNoDelay = () => {}
@@ -60,7 +53,7 @@ function buildKeepAlive (client) {
 }
 
 describe('deserializer error recovery', () => {
-  it('keeps consuming inbound packets after a malformed known packet destroys the parser', function (done) {
+  it('reports malformed packet contents and keeps consuming subsequent frames', function (done) {
     this.timeout(5000)
 
     const client = new Client(false, '26.2')
@@ -71,6 +64,8 @@ describe('deserializer error recovery', () => {
 
     const errors = []
     client.on('error', (err) => errors.push(err))
+    const malformedPackets = []
+    client.on('malformedPacket', (packet) => malformedPackets.push(packet))
 
     let sawGoodPacket = false
     client.on('keep_alive', () => { sawGoodPacket = true })
@@ -93,25 +88,63 @@ describe('deserializer error recovery', () => {
 
     const good = buildKeepAlive(client)
 
-    socket.write(frame(good)) // triggers the poisoned parse -> parser destroyed
-
+    const malformed = Buffer.from([0x14, 0x00, 0x01])
+    socket.write(Buffer.concat([frame(malformed), frame(good)]))
     setTimeout(() => {
-      socket.write(frame(good)) // must still be delivered after recovery
+      assert.strictEqual(errors.length, 0, 'framed decode failures must not become global client errors')
+      assert.strictEqual(malformedPackets.length, 1)
+      assert.strictEqual(malformedPackets[0].packetId, 0x14)
+      assert.strictEqual(malformedPackets[0].buffer.toString('hex'), malformed.toString('hex'))
+      assert.match(malformedPackets[0].error.message, /simulated malformed known packet/)
+      assert.strictEqual(malformedPackets[0].protocolVersion, client.protocolVersion)
+      assert.strictEqual(malformedPackets[0].state, 'play')
+      assert.strictEqual(socket.isPaused(), false)
+      assert.ok(sawGoodPacket, 'valid packet after malformed frame must still be delivered')
+      done()
+    }, 200)
+  })
 
-      setTimeout(() => {
-        assert.strictEqual(
-          socket.isPaused(), false,
-          'socket must not be left paused after a parse error; a paused socket ' +
-          'stops emitting "data" forever, which is the production freeze'
-        )
-        assert.ok(
-          sawGoodPacket,
-          'a valid keep_alive sent after a malformed packet must still be delivered; ' +
-          `errors=${errors.map(e => e.message).join(' | ') || '(none)'}`
-        )
-        done()
-      }, 200)
-    }, 50)
+  it('reports a malformed 26.3 advancements frame without raising a global error', function (done) {
+    this.timeout(5000)
+    const client = new Client(false, '26.3')
+    client.state = 'play'
+    const socket = makeFakeSocket()
+    client.setSocket(socket)
+    const errors = []
+    const malformedPackets = []
+    client.on('error', err => errors.push(err))
+    client.on('malformedPacket', packet => malformedPackets.push(packet))
+    let keepAlives = 0
+    client.on('keep_alive', () => { keepAlives++ })
+
+    const parser = client.deserializer
+    const realParse = parser.parsePacketBuffer.bind(parser)
+    let poisoned = false
+    parser.parsePacketBuffer = buffer => {
+      if (!poisoned) {
+        poisoned = true
+        const err = new RangeError('negative decoded offset')
+        err.partialReadError = false
+        err.buffer = malformed
+        throw err
+      }
+      return realParse(buffer)
+    }
+
+    const malformed = Buffer.from([0x85, 0x01, 0x01, 0x02])
+    const good = buildKeepAlive(client)
+    socket.write(Buffer.concat([frame(malformed), frame(good)]))
+    setTimeout(() => {
+      assert.strictEqual(errors.length, 0)
+      assert.strictEqual(malformedPackets.length, 1)
+      assert.strictEqual(malformedPackets[0].packetId, 0x85)
+      assert.strictEqual(malformedPackets[0].protocolVersion, 777)
+      assert.strictEqual(malformedPackets[0].buffer.toString('hex'), malformed.toString('hex'))
+      assert.match(malformedPackets[0].error.message, /negative decoded offset/)
+      assert.strictEqual(keepAlives, 1)
+      assert.strictEqual(socket.isPaused(), false)
+      done()
+    }, 200)
   })
 
   // The silent branch: an UNMAPPED packet id on 26.2. There is no schema for
