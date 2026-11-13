@@ -11,6 +11,7 @@ const [readVarInt] = require('protodef').types.varint
 // offset from a corrupted cursor) can reach the client without the packet id.
 class DiagnosticFullPacketParser extends FullPacketParser {
   _transform (chunk, enc, cb) {
+    if (this.onPacketBody) this.onPacketBody(chunk)
     let packet
     try {
       packet = this.parsePacketBuffer(chunk)
@@ -151,8 +152,10 @@ function createSerializer ({ state = states.HANDSHAKING, isServer = false, versi
   return new Serializer(createProtocol(state, !isServer ? 'toServer' : 'toClient', version, customPackets, compiled), 'packet')
 }
 
-function createDeserializer ({ state = states.HANDSHAKING, isServer = false, version, customPackets, compiled = true, noErrorLogging = false } = {}) {
-  return new DiagnosticFullPacketParser(createProtocol(state, isServer ? 'toServer' : 'toClient', version, customPackets, compiled), 'packet', noErrorLogging)
+function createDeserializer ({ state = states.HANDSHAKING, isServer = false, version, customPackets, compiled = true, noErrorLogging = false, onPacketBody } = {}) {
+  const parser = new DiagnosticFullPacketParser(createProtocol(state, isServer ? 'toServer' : 'toClient', version, customPackets, compiled), 'packet', noErrorLogging)
+  parser.onPacketBody = onPacketBody
+  return parser
 }
 
 module.exports = {

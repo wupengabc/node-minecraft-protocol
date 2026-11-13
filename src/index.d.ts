@@ -57,6 +57,8 @@ declare module 'minecraft-protocol' {
 		/** Local queue or stream pressure; false does not imply delivery to the server. */
 		readonly writeBackpressured: boolean
 		writeRaw(buffer: any): void
+		/** Observe independent copies of decompressed packet bodies before parsing, including the packet ID but no frame header. Synchronous exceptions are isolated. State is captured when the parser is created. */
+		addPacketBodyObserver(listener: (body: Buffer, state: string) => void): () => void
 		compressionThreshold: string
 		ended: boolean
 		connect(port: number, host: string): void

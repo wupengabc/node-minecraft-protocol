@@ -39,6 +39,7 @@ class Client extends EventEmitter {
     this._ending = false
     this._outboundEnded = false
     this._mcBundle = []
+    this._packetBodyObservers = new Set()
     // Always consume transform output immediately. Only final wire bytes wait
     // for the socket, so codec/transport changes cannot reinterpret a backlog.
     this.framer.on('data', (buffer) => {
@@ -158,6 +159,13 @@ class Client extends EventEmitter {
     })
   }
 
+  addPacketBodyObserver (listener) {
+    if (typeof listener !== 'function') throw new TypeError('Packet body observer must be a function')
+    const observer = { listener }
+    this._packetBodyObservers.add(observer)
+    return () => { this._packetBodyObservers.delete(observer) }
+  }
+
   // Creates the inbound parser for `state` and wires its handlers. Split out of
   // setSerializer so a destroyed parser can be replaced after a hard parse
   // error without disturbing the outbound codec or ordered wire-byte queue.
@@ -169,7 +177,18 @@ class Client extends EventEmitter {
       packetsToParse:
       this.packetsToParse,
       customPackets: this.customPackets,
-      noErrorLogging: this.hideErrors
+      noErrorLogging: this.hideErrors,
+      onPacketBody: body => {
+        // Snapshot registrations and give each observer its own bytes. Neither
+        // mutations nor exceptions may interfere with parsing or other listeners.
+        for (const { listener } of Array.from(this._packetBodyObservers)) {
+          try {
+            const copy = Buffer.allocUnsafeSlow(body.length)
+            body.copy(copy)
+            listener(copy, state)
+          } catch (_) {}
+        }
+      }
     })
 
     this.deserializer.on('error', (e) => {
