@@ -129,7 +129,7 @@ Returns a `Client` instance and perform login.
  * keepAlive : send keep alive packets : default to true
  * closeTimeout : end the connection after this delay in milliseconds if server doesn't answer to ping, default to `120*1000`
  * noPongTimeout : after the server opened the connection, wait for a default of `5*1000` after pinging and answers without the latency
- * checkTimeoutInterval : default to `30*1000` (30s), check if keepalive received at that period, disconnect otherwise.
+ * checkTimeoutInterval : socket inactivity threshold, default `30*1000` (30s). In play and configuration, recent incoming socket data can defer the watchdog even if no keepalive packet was dispatched. Outgoing writes do not count as receive activity.
  * keepAliveTimeoutGracePeriod : after inactivity reaches `checkTimeoutInterval`, wait this additional bounded period for socket activity before disconnecting. Defaults to `5*1000` (5s). The client emits `keepAliveWarning`, `keepAliveRecovered`, and `keepAliveTimeout` diagnostics events.
  * version : 1.8 or 1.9 or false (to auto-negotiate): default to 1.8
  * customPackets (optional) : an object index by version/state/direction/name, see client_custom_packet for an example
@@ -176,6 +176,18 @@ write a packet
 ### client.writeRaw(buffer)
 
 write a raw buffer as a packet
+
+### client.getReceiveDiagnostics()
+
+Returns a local snapshot without packet bodies or exceptions. Compare `packetBodies`, `decodedPackets` and `dispatchedPackets` over time to see whether data reached the parser, decoded, or was released from a bundle. It includes the current socket pause state, pending frame size, stream buffer lengths and drain flags, parser generation/rebuild count, dropped compressed frame count, and the latest receive-listener failure metadata. Keepalive diagnostic events also include this snapshot as `receive`.
+
+`readable: true` alone does not imply that a socket is consuming data. A snapshot describes the local pipeline, not whether the peer received a write or why it stopped sending.
+
+### `receiveListenerError` event
+
+A synchronous exception from a receive event listener is isolated so later listeners and packets can still run. This applies to `packet`, named packet events, `raw.*`, `raw`, `rawPacket`, `malformedPacket`, `state`, `socketActivity`, and the keepalive diagnostic events when dispatched by the client. Listener order, removal during dispatch, and `once` subscriptions still use the normal EventEmitter semantics. This does not change explicit `client.emit()` calls, fatal `error` handling, or the handling of rejected promises returned by async listeners.
+
+The report contains `at`, `count`, `event`, `state`, optional `packetName`/`packetId`, and the original thrown `error`. The default log and receive snapshot do not include the thrown object. If persisting reports, sanitize `error` first. The event is available even with `hideErrors: true`.
 
 ### client.end(reason, fullReason)
 

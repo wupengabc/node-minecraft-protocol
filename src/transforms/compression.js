@@ -45,32 +45,27 @@ class Decompressor extends Transform {
     super()
     this.compressionThreshold = compressionThreshold
     this.hideErrors = hideErrors
+    this.droppedFrames = 0
   }
 
   _transform (chunk, enc, cb) {
-    const { size, value, error } = readVarInt(chunk, 0)
-    if (error) { return cb(error) }
-    if (value === 0) {
-      this.push(chunk.slice(size))
+    let body
+    try {
+      const { size, value } = readVarInt(chunk, 0)
+      if (value < 0) throw new Error('Invalid decompressed length')
+      body = value === 0
+        ? chunk.subarray(size)
+        : zlib.unzipSync(chunk.subarray(size), { finishFlush: zlib.constants.Z_SYNC_FLUSH })
+      if (value !== 0 && body.length !== value) throw new Error('Unexpected decompressed length')
+    } catch (err) {
+      // The splitter has already isolated this frame, so the next frame is
+      // still usable. Do not log the frame or catch downstream listener errors
+      // here: they are not decompression failures.
+      this.droppedFrames++
+      if (!this.hideErrors) console.error('problem inflating chunk:', err.message)
       return cb()
-    } else {
-      try {
-        const newBuf = zlib.unzipSync(chunk.slice(size), { finishFlush: 2 })
-        if (newBuf.length !== value && !this.hideErrors) {
-          console.error('uncompressed length should be ' + value + ' but is ' + newBuf.length)
-        }
-        this.push(newBuf)
-        return cb()
-      } catch (err) {
-        if (!this.hideErrors) {
-          console.error('problem inflating chunk')
-          console.error('uncompressed length ' + value)
-          console.error('compressed length ' + chunk.length)
-          console.error('hex ' + chunk.toString('hex'))
-          console.log(err)
-        }
-        return cb()
-      }
     }
+    this.push(body)
+    cb()
   }
 }

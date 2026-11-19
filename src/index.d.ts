@@ -12,6 +12,44 @@ import NodeRSA from 'node-rsa';
 type PromiseLike = Promise<void> | void
 
 declare module 'minecraft-protocol' {
+	export interface ReceiveStreamDiagnostics {
+		paused?: boolean
+		readableFlowing?: boolean | null
+		readableLength?: number
+		readableHighWaterMark?: number
+		writableLength?: number
+		writableHighWaterMark?: number
+		writableNeedDrain?: boolean
+		writing?: boolean
+		destroyed?: boolean
+	}
+
+	export interface ReceiveListenerError {
+		at: number
+		count: number
+		event: string
+		state: string
+		packetName?: string
+		packetId?: number
+		/** The original sync exception; may contain sensitive application data. */
+		error: unknown
+	}
+
+	export interface ReceiveDiagnostics {
+		packetBodies: number
+		decodedPackets: number
+		dispatchedPackets: number
+		parserGeneration: number
+		parserRebuilds: number
+		listenerErrors: number
+		lastListenerError?: Omit<ReceiveListenerError, 'error'>
+		bundlePackets: number
+		droppedCompressedFrames: number
+		pendingFrameBytes: number
+		socket?: ReceiveStreamDiagnostics & { bytesRead?: number }
+		inbound: Partial<Record<'decipher' | 'splitter' | 'decompressor' | 'deserializer', ReceiveStreamDiagnostics>>
+	}
+
 	export interface KeepAliveDiagnostics {
 		at: number
 		phase: 'keepAliveWarning' | 'keepAliveRecovered' | 'keepAliveTimeout'
@@ -32,6 +70,7 @@ declare module 'minecraft-protocol' {
 		timerDelay?: number
 		graceStartedAt?: number | null
 		graceElapsed?: number
+		receive?: ReceiveDiagnostics
 		recovery?: string
 	}
 
@@ -59,6 +98,8 @@ declare module 'minecraft-protocol' {
 		writeRaw(buffer: any): void
 		/** Observe independent copies of decompressed packet bodies before parsing, including the packet ID but no frame header. Synchronous exceptions are isolated. State is captured when the parser is created. */
 		addPacketBodyObserver(listener: (body: Buffer, state: string) => void): () => void
+		/** Snapshot of receive progress and backpressure, without packet contents. */
+		getReceiveDiagnostics(): ReceiveDiagnostics
 		compressionThreshold: string
 		ended: boolean
 		connect(port: number, host: string): void
@@ -83,6 +124,7 @@ declare module 'minecraft-protocol' {
 		/** Notification only; does not disconnect or open the requested destination. */
 		on(event: 'transferRequested', handler: (request: { host: string; port: number; cookies: Map<string, Buffer> }) => PromiseLike): this
 		on(event: 'malformedPacket', handler: (packet: { buffer: Buffer; state: States; protocolVersion: number; packetId?: number; error: Error }) => PromiseLike): this
+		on(event: 'receiveListenerError', handler: (report: ReceiveListenerError) => void): this
 		on(event: 'keepAliveWarning', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this
 		on(event: 'keepAliveRecovered', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this
 		on(event: 'keepAliveTimeout', handler: (diagnostics: KeepAliveDiagnostics) => PromiseLike): this

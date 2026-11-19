@@ -14,6 +14,21 @@ const [readVarInt] = require('protodef').types.varint
 
 const closeTimeout = 30 * 1000
 
+function receiveStreamStatus (stream) {
+  if (!stream) return undefined
+  return {
+    paused: stream.isPaused?.(),
+    readableFlowing: stream.readableFlowing,
+    readableLength: stream.readableLength,
+    readableHighWaterMark: stream.readableHighWaterMark,
+    writableLength: stream.writableLength,
+    writableHighWaterMark: stream.writableHighWaterMark,
+    writableNeedDrain: stream.writableNeedDrain,
+    writing: stream._writableState?.writing,
+    destroyed: stream.destroyed
+  }
+}
+
 class Client extends EventEmitter {
   constructor (isServer, version, customPackets, hideErrors = false) {
     super()
@@ -40,6 +55,14 @@ class Client extends EventEmitter {
     this._outboundEnded = false
     this._mcBundle = []
     this._packetBodyObservers = new Set()
+    this._receiveCounters = {
+      packetBodies: 0,
+      decodedPackets: 0,
+      dispatchedPackets: 0,
+      parserGeneration: 0,
+      parserRebuilds: 0,
+      listenerErrors: 0
+    }
     // Always consume transform output immediately. Only final wire bytes wait
     // for the socket, so codec/transport changes cannot reinterpret a backlog.
     this.framer.on('data', (buffer) => {
@@ -68,17 +91,10 @@ class Client extends EventEmitter {
     return this.compressor ? this.decompressor : this.splitter
   }
 
-  // A hard (non-PartialReadError) parse failure makes protodef call the
-  // Transform callback with an error, which DESTROYS the deserializer.
-  // A destroyed stream can never accept data again, so simply re-piping the
-  // upstream into it silently drops every subsequent packet: inbound traffic
-  // stops being parsed, keep_alive is never answered, backpressure cascades to
-  // the socket, and the connection freezes with no error, no close and no EOF
-  // until the keepalive watchdog fires ~2 minutes later.
-  //
-  // Recover by building a fresh parser for the current state and rewiring the
-  // upstream to it.
+  // Hard parse errors destroy the Transform. Re-piping to the old parser
+  // would leave the receive pipeline stuck, so create a fresh one instead.
   _rebuildDeserializer () {
+    this._receiveCounters.parserRebuilds++
     const source = this._deserializerSource
     const old = this.deserializer
 
@@ -166,10 +182,72 @@ class Client extends EventEmitter {
     return () => { this._packetBodyObservers.delete(observer) }
   }
 
+  // A packet listener runs synchronously inside a parser push(). A throw must
+  // not skip the Transform callback or prevent later listeners (e.g. keepalive
+  // and configuration handlers) from running. rawListeners gives us the same
+  // dispatch snapshot as EventEmitter, including its once-removal wrappers.
+  _emitReceiveEvent (event, packet, ...args) {
+    for (const listener of this.rawListeners(event)) {
+      try {
+        Reflect.apply(listener, this, args)
+      } catch (error) {
+        this._reportReceiveListenerError(event, packet, error)
+      }
+    }
+  }
+
+  _reportReceiveListenerError (event, packet, error) {
+    const count = ++this._receiveCounters.listenerErrors
+    const report = {
+      at: Date.now(),
+      count,
+      event,
+      state: packet?.state ?? this.protocolState,
+      packetName: packet?.name,
+      packetId: packet?.packetId
+    }
+    this._lastReceiveListenerError = report
+
+    // Diagnostics may invoke client APIs themselves. Never recurse or let a
+    // diagnostic listener failure escape back into a Transform.
+    if (this._reportingReceiveListenerError) return
+    this._reportingReceiveListenerError = true
+    try {
+      if (!this.hideErrors && (this._receiveListenerLogAt === undefined || report.at - this._receiveListenerLogAt >= 5000)) {
+        this._receiveListenerLogAt = report.at
+        try { console.error('[minecraft-protocol] receive listener threw:', event, report.state, report.packetName ?? '', { count }) } catch (_) {}
+      }
+      for (const listener of this.rawListeners('receiveListenerError')) {
+        try { Reflect.apply(listener, this, [{ ...report, error }]) } catch (_) {}
+      }
+    } finally {
+      this._reportingReceiveListenerError = false
+    }
+  }
+
+  getReceiveDiagnostics () {
+    const socket = this.socket
+    return {
+      ...this._receiveCounters,
+      lastListenerError: this._lastReceiveListenerError ? { ...this._lastReceiveListenerError } : undefined,
+      bundlePackets: this._mcBundle.length,
+      droppedCompressedFrames: this.decompressor?.droppedFrames ?? 0,
+      pendingFrameBytes: this.splitter.buffer.length,
+      socket: socket ? { ...receiveStreamStatus(socket), bytesRead: socket.bytesRead } : undefined,
+      inbound: {
+        decipher: receiveStreamStatus(this.decipher),
+        splitter: receiveStreamStatus(this.splitter),
+        decompressor: receiveStreamStatus(this.decompressor),
+        deserializer: receiveStreamStatus(this.deserializer)
+      }
+    }
+  }
+
   // Creates the inbound parser for `state` and wires its handlers. Split out of
   // setSerializer so a destroyed parser can be replaced after a hard parse
   // error without disturbing the outbound codec or ordered wire-byte queue.
   _attachDeserializer (state) {
+    this._receiveCounters.parserGeneration++
     this.deserializer = createDeserializer({
       isServer: this.isServer,
       version: this.version,
@@ -179,6 +257,7 @@ class Client extends EventEmitter {
       customPackets: this.customPackets,
       noErrorLogging: this.hideErrors,
       onPacketBody: body => {
+        this._receiveCounters.packetBodies++
         // Snapshot registrations and give each observer its own bytes. Neither
         // mutations nor exceptions may interfere with parsing or other listeners.
         for (const { listener } of Array.from(this._packetBodyObservers)) {
@@ -238,9 +317,7 @@ class Client extends EventEmitter {
           payload.error.message = `[packet 0x${payload.packetId?.toString(16) ?? 'unknown'} | ${payload.buffer.length} bytes] ${payload.error.message}`
         }
         try {
-          this.emit(isUnknownPacket ? 'rawPacket' : 'malformedPacket', payload)
-        } catch (listenerError) {
-          if (!this.hideErrors) console.error('Uncaught error in malformed packet listener:', listenerError)
+          this._emitReceiveEvent(isUnknownPacket ? 'rawPacket' : 'malformedPacket', payload, payload)
         } finally {
           // The framed payload is isolated and discarded. Rebuild because
           // protodef destroys its parser for hard errors and may leave partial
@@ -264,25 +341,16 @@ class Client extends EventEmitter {
       this.emit('error', e)
     })
     const emitPacket = (parsed) => {
-      this.emit('packet', parsed.data, parsed.metadata, parsed.buffer, parsed.fullBuffer)
-      this.emit(parsed.metadata.name, parsed.data, parsed.metadata)
-      this.emit('raw.' + parsed.metadata.name, parsed.buffer, parsed.metadata)
-      this.emit('raw', parsed.buffer, parsed.metadata)
-    }
-    // Wraps emitPacket so that a throwing listener cannot abort processing of
-    // the remaining packets in the same bundle or batch. Errors are printed to
-    // stderr (unless hideErrors is set) but do NOT disconnect the bot.
-    const safeEmitPacket = (parsed) => {
-      try {
-        emitPacket(parsed)
-      } catch (err) {
-        if (!this.hideErrors) {
-          // eslint-disable-next-line no-console
-          console.error('[minecraft-protocol] uncaught error in listener for packet', parsed.metadata?.name, err)
-        }
-      }
+      const { name, state } = parsed.metadata
+      const packet = typeof name === 'number' ? { packetId: name, state } : { name, state }
+      this._receiveCounters.dispatchedPackets++
+      this._emitReceiveEvent('packet', packet, parsed.data, parsed.metadata, parsed.buffer, parsed.fullBuffer)
+      this._emitReceiveEvent(String(name), packet, parsed.data, parsed.metadata)
+      this._emitReceiveEvent('raw.' + name, packet, parsed.buffer, parsed.metadata)
+      this._emitReceiveEvent('raw', packet, parsed.buffer, parsed.metadata)
     }
     this.deserializer.on('data', (parsed) => {
+      this._receiveCounters.decodedPackets++
       parsed.metadata.name = parsed.data.name
       parsed.data = parsed.data.params
       parsed.metadata.state = state
@@ -292,21 +360,23 @@ class Client extends EventEmitter {
       // instead of normal packet events. Do NOT throw 'error', do NOT disconnect socket.
       // The read loop continues consuming subsequent packets normally.
       if (this.protocolVersion >= 775 && typeof parsed.metadata.name === 'number' && parsed.data === undefined) {
-        this.emit('rawPacket', {
+        const payload = {
           buffer: parsed.fullBuffer || parsed.buffer,
           state: this.protocolState,
           protocolVersion: this.protocolVersion,
           packetId: parsed.metadata.name
-        })
+        }
+        this._emitReceiveEvent('rawPacket', payload, payload)
         return
       }
 
       if (debug.enabled && !debugSkip.includes(parsed.metadata.name)) {
         const id = this._packetNameToIdIn?.[parsed.metadata.name]
         const idStr = id ? ` (${id})` : ''
-        debug('read packet ' + state + '.' + parsed.metadata.name + idStr)
-        const s = JSON.stringify(parsed.data, null, 2)
-        debug(s && s.length > 10000 ? parsed.data : s)
+        try {
+          debug('read packet ' + state + '.' + parsed.metadata.name + idStr)
+          debug('%O', parsed.data)
+        } catch (_) {}
       }
       if (this._hasBundlePacket && parsed.metadata.name === 'bundle_delimiter') {
         if (this._mcBundle.length) { // End bundle
@@ -314,7 +384,7 @@ class Client extends EventEmitter {
           // (e.g. a listener that triggers another emit) cannot corrupt the list.
           const bundle = this._mcBundle
           this._mcBundle = []
-          bundle.forEach(safeEmitPacket)
+          bundle.forEach(emitPacket)
           emitPacket(parsed)
         } else { // Start bundle
           this._mcBundle.push(parsed)
@@ -327,7 +397,7 @@ class Client extends EventEmitter {
         if (this._mcBundle.length > 1024) {
           const oversized = this._mcBundle
           this._mcBundle = []
-          oversized.forEach(safeEmitPacket)
+          oversized.forEach(emitPacket)
         }
       } else {
         emitPacket(parsed)
@@ -349,7 +419,7 @@ class Client extends EventEmitter {
 
     this._deserializerSource.pipe(this.deserializer)
 
-    this.emit('state', newProperty, oldProperty)
+    this._emitReceiveEvent('state', undefined, newProperty, oldProperty)
   }
 
   get compressionThreshold () {
@@ -423,7 +493,7 @@ class Client extends EventEmitter {
       this._lastSocketDataAt = this._lastSocketActivity
       this._socketActivityCount++
       recordSocketEvent('data', { bytes: data.length })
-      this.emit('socketActivity')
+      this._emitReceiveEvent('socketActivity')
     }
     const onConnect = () => {
       recordSocketEvent('connect')

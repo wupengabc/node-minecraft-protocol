@@ -12,3 +12,10 @@ unsubscribe()
 client.addPacketBodyObserver(null)
 // @ts-expect-error The body is a Buffer, not a packet object.
 client.addPacketBodyObserver((body: { name: string }) => {})
+
+const writing: boolean | undefined = client.getReceiveDiagnostics().inbound.deserializer?.writing
+client.on('receiveListenerError', report => {
+  const event: string = report.event
+  const error: unknown = report.error
+  return void [event, error, writing]
+})

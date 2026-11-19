@@ -165,10 +165,12 @@ module.exports = function (client, options) {
       lastKeepAliveId,
       lastKeepAliveReplyQueuedAt,
       lastKeepAliveWriteAt: client._lastKeepAliveWriteAt ?? null,
+      receive: client.getReceiveDiagnostics?.(),
       ...extra
     }
     client._keepAliveDiagnostics = diagnostics
-    client.emit(event, diagnostics)
+    if (client._emitReceiveEvent) client._emitReceiveEvent(event, undefined, diagnostics)
+    else client.emit(event, diagnostics)
     return diagnostics
   }
 
@@ -196,6 +198,7 @@ module.exports = function (client, options) {
   }
 
   function serializableValue (value) {
-    return typeof value === 'bigint' ? value.toString() : value
+    // ProtoDef may represent an i64 as an array-backed SignedBigInt.
+    return typeof value === 'bigint' || Array.isArray(value) ? value.toString() : value
   }
 }
