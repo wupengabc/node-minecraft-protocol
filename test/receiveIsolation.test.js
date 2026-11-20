@@ -67,6 +67,24 @@ async function drain () {
 }
 
 describe('receive event isolation', () => {
+  it('drains already accepted frames when the encrypted transport reaches clean EOF', async () => {
+    const f = fixture({ compression: true, encryption: true })
+    try {
+      const received = []
+      f.client.on('custom_payload', data => received.push(data.data[0]))
+      const packets = Array.from({ length: 512 }, (_, i) => f.frame(f.body('custom_payload', {
+        channel: 'test:receive', data: Buffer.alloc(256, i % 256)
+      })))
+      f.feed(...packets)
+      f.socket.push(null)
+      await drain()
+      assert.deepEqual(received, Array.from({ length: 512 }, (_, i) => i % 256))
+      assert.deepEqual(f.clientErrors, [])
+    } finally {
+      f.close()
+    }
+  })
+
   for (const transport of ['plain', 'compression', 'compression+encryption']) {
     it(`keeps heartbeat responses and the receive pipeline alive (${transport})`, async () => {
       const f = fixture({ compression: transport.includes('compression'), encryption: transport.includes('encryption') })

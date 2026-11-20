@@ -76,6 +76,56 @@ describe('outbound packet queue', function () {
     socket.destroy()
   })
 
+  it('makes end idempotent and rejects gameplay writes after closing', async function () {
+    const fixture = stalledClient('26.3')
+    const { client, socket } = fixture
+    client.state = 'play'
+    const raw = client.serializer.createPacketBuffer({ name: 'tick_end', params: {} })
+    client.write('tick_end', {})
+    client.end('first')
+    const timer = client.closeTimer
+    client.end('second')
+    client.state = 'configuration' // A replacement serializer must not reopen writes.
+    client.write('finish_configuration', {})
+    client.writePriority('finish_configuration', {})
+    client.writeRaw(raw)
+    assert.strictEqual(client.closeTimer, timer)
+    await fixture.flush()
+    decodeWire(fixture.wire(), [['play', 'tick_end']], { version: '26.3' })
+    const ended = new Promise(resolve => client.once('end', resolve))
+    socket.destroy()
+    assert.strictEqual(await ended, 'first')
+    assert.strictEqual(client.closeTimer, null)
+  })
+
+  it('cleans up after a write failure even when an error listener throws', function () {
+    const { client, socket } = stalledClient('26.3')
+    client.state = 'play'
+    const raw = client.serializer.createPacketBuffer({ name: 'tick_end', params: {} })
+    client.writeRaw(raw)
+    let ended = 0
+    let errors = 0
+    const fail = Object.assign(new Error('write EPIPE'), { code: 'EPIPE' })
+    client.on('end', () => { ended++ })
+    client.on('error', () => {
+      errors++
+      client.writeRaw(raw)
+      throw fail
+    })
+    assert.throws(() => socket.emit('error', fail), err => err === fail)
+    client.write('tick_end', {})
+    client.writePriority('tick_end', {})
+    client.writeRaw(raw)
+    client._queueWireBuffer(raw) // Late output from a transform.
+    socket.emit('error', Object.assign(new Error('late reset'), { code: 'ECONNRESET' }))
+    assert.strictEqual(errors, 1)
+    assert.strictEqual(ended, 1)
+    assert.strictEqual(client._teardownError.code, 'ECONNRESET')
+    assert.strictEqual(client._writeQueue.length, 0)
+    assert.strictEqual(client.splitter.destroyed, true)
+    socket.destroy()
+  })
+
   it('keeps an encryption response plaintext and encrypts only subsequent bytes during a stall', async function () {
     const fixture = stalledClient()
     const { client, socket } = fixture

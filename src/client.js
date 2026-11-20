@@ -232,7 +232,7 @@ class Client extends EventEmitter {
       lastListenerError: this._lastReceiveListenerError ? { ...this._lastReceiveListenerError } : undefined,
       bundlePackets: this._mcBundle.length,
       droppedCompressedFrames: this.decompressor?.droppedFrames ?? 0,
-      pendingFrameBytes: this.splitter.buffer.length,
+      pendingFrameBytes: this.splitter.pendingFrameBytes,
       socket: socket ? { ...receiveStreamStatus(socket), bytesRead: socket.bytesRead } : undefined,
       inbound: {
         decipher: receiveStreamStatus(this.decipher),
@@ -433,6 +433,7 @@ class Client extends EventEmitter {
   setSocket (socket) {
     this.ended = false
     this._ending = false
+    this._socketFailed = false
     this._lastSocketActivity = Date.now()
     this._lastSocketDataAt = null
     this._lastSocketEvent = null
@@ -446,7 +447,6 @@ class Client extends EventEmitter {
       if (this._socketEventHistory.length > 8) this._socketEventHistory.shift()
     }
 
-    // TODO : A lot of other things needs to be done.
     const endSocket = (event, record = true) => {
       if (this.ended) return
       if (record) recordSocketEvent(event)
@@ -457,9 +457,17 @@ class Client extends EventEmitter {
       this._writeQueue = []
       this._priorityWriteQueue = []
       clearTimeout(this.closeTimer)
-      this.socket.removeListener('close', onClose)
-      this.socket.removeListener('end', onEnd)
-      this.socket.removeListener('timeout', onTimeout)
+      this.closeTimer = null
+      socket.removeListener('end', onEnd)
+      socket.removeListener('timeout', onTimeout)
+      socket.removeListener('data', onSocketData)
+      socket.removeListener('drain', onDrain)
+      // A clean EOF must let the pipe deliver already accepted final packets.
+      // An abrupt close/error cannot leave a suspended splitter holding a chunk.
+      if (event !== 'end') {
+        this._mcBundle = []
+        this.splitter.destroy()
+      }
       this.emit('end', this._endReason || 'socketClosed')
     }
 
@@ -477,13 +485,17 @@ class Client extends EventEmitter {
       // the real error/reason has already been reported. Still record it for
       // diagnostics, but don't re-alarm consumers; endSocket() below still
       // fires 'end' with the original reason.
-      if (this._ending) {
+      if (this._ending || this.ended || this._socketFailed) {
         this._teardownError = { code: err.code, message: err.message, at: Date.now() }
         endSocket('error', false)
         return
       }
-      this.emit('error', err)
-      endSocket('error', false)
+      this._socketFailed = true
+      try {
+        this.emit('error', err)
+      } finally {
+        endSocket('error', false)
+      }
     }
 
     const onError = (err) => this.emit('error', err)
@@ -500,6 +512,7 @@ class Client extends EventEmitter {
       this.emit('connect')
     }
     const onClose = () => endSocket('close')
+    const onDrain = () => this._drainWriteQueue()
     const onEnd = () => endSocket('end')
     const onTimeout = () => endSocket('timeout')
 
@@ -510,11 +523,11 @@ class Client extends EventEmitter {
     this.socket.on('connect', onConnect)
 
     this.socket.on('error', onFatalError)
-    this.socket.on('close', onClose)
+    this.socket.once('close', onClose)
     this.socket.on('end', onEnd)
     this.socket.on('timeout', onTimeout)
     this.socket.on('data', onSocketData)
-    this.socket.on('drain', () => this._drainWriteQueue())
+    this.socket.on('drain', onDrain)
     this.framer.on('error', onError)
     this.splitter.on('error', onError)
 
@@ -523,6 +536,7 @@ class Client extends EventEmitter {
   }
 
   end (reason) {
+    if (this._ending || (this.ended && this.socket)) return
     this._endReason = reason
     this._ending = true
     // Finish the wire FIFO before ending the socket, including a final
@@ -532,7 +546,7 @@ class Client extends EventEmitter {
     } else {
       if (this.socket) this.socket.end()
     }
-    if (this.socket) {
+    if (this.socket && !this.ended) {
       this.closeTimer = setTimeout(
         this.socket.destroy.bind(this.socket),
         closeTimeout
@@ -582,7 +596,7 @@ class Client extends EventEmitter {
   }
 
   _queueWrite (name, params) {
-    if (!this.serializer?.writable) return
+    if (!this._acceptsNewWrites() || !this.serializer?.writable) return
     if (debug.enabled && !debugSkip.includes(name)) {
       const id = this._packetNameToIdOut?.[name]
       const idStr = id ? ` (${id})` : ''
@@ -618,7 +632,13 @@ class Client extends EventEmitter {
     else this.framer.write(buffer)
   }
 
+  _acceptsNewWrites () {
+    // Before setSocket a caller can still queue initial wire bytes.
+    return !this._ending && !this._socketFailed && !(this.ended && this.socket)
+  }
+
   _queueWireBuffer (buffer) {
+    if (this._socketFailed || (this.ended && this.socket)) return
     this._writeQueue.push(buffer)
     this._drainWriteQueue()
   }
@@ -629,15 +649,15 @@ class Client extends EventEmitter {
   }
 
   _drainWriteQueue () {
-    if (this._drainingWrites || this.ended || !this.socket?.writable) return
+    if (this._drainingWrites || this.ended || this._socketFailed || !this.socket?.writable) return
     this._drainingWrites = true
     try {
-      while (this._writeQueue.length && !this.socket.writableNeedDrain) {
+      while (!this.ended && !this._socketFailed && this._writeQueue.length && !this.socket.writableNeedDrain) {
         // A false return still accepts this buffer. Resume with the next one
         // on drain; replaying this one would corrupt framing/encryption.
         if (!this.socket.write(this._writeQueue.shift())) break
       }
-      if (this._outboundEnded && !this._writeQueue.length) this.socket.end()
+      if (!this.ended && !this._socketFailed && this._outboundEnded && !this._writeQueue.length && !this.socket.writableEnded) this.socket.end()
     } finally {
       this._drainingWrites = false
     }
@@ -650,6 +670,7 @@ class Client extends EventEmitter {
   }
 
   writeRaw (buffer) {
+    if (!this._acceptsNewWrites()) return
     const stream = this.compressor === null ? this.framer : this.compressor
     if (!stream.writable) { return }
     this._writePacketBuffer(buffer)

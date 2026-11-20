@@ -117,8 +117,11 @@ module.exports = function (client, options) {
     const error = new Error(`client timed out after ${checkTimeoutInterval} milliseconds`)
     error.code = 'KEEPALIVE_TIMEOUT'
     error.keepAliveDiagnostics = diagnostics
-    client.emit('error', error)
-    client.end('keepAliveError')
+    try {
+      client.emit('error', error)
+    } finally {
+      client.end('keepAliveError')
+    }
   }
 
   function recoverFromGrace (reason) {
